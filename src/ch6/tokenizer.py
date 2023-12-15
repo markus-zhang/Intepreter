@@ -18,18 +18,19 @@ prevchar = '\n'     # '\n' in prevchar signals start of new line
 blankline = True    # Set to False if line is not blank
 
 # Category constants
-EOF         = 0
-PRINT       = 1
-UNSIGNEDINT = 2
-NAME        = 3     # identifier that is not a keyword
-ASSIGNOP    = 4     # '=', assignment operator
-LEFTPAREN   = 5
-RIGHTPAREN  = 6
-PLUS        = 7     # '+'
-MINUS       = 8
-TIMES       = 9     # '*'
-NEWLINE     = 10
-ERROR       = 255   # if none of above, then error
+EOF                 = 0
+PRINT               = 1
+UNSIGNEDINT         = 2
+NAME                = 3     # identifier that is not a keyword
+ASSIGNOP            = 4     # '=', assignment operator
+LEFTPAREN           = 5
+RIGHTPAREN          = 6
+PLUS                = 7     # '+'
+MINUS               = 8
+TIMES               = 9     # '*'
+NEWLINE             = 10
+COMMENT_SINGLE      = 11
+ERROR               = 255   # if none of above, then error
 
 # Displayable names for each token category, using dictionary
 catnames = {
@@ -44,6 +45,7 @@ catnames = {
     8:  'MINUS',
     9:  'TIMES',
     10: 'NEWLINE',
+    11: 'COMMENT_SINGLE',
     255:'ERROR'
 }
 
@@ -135,6 +137,15 @@ def tokenizer():
             token.category = smalltokens[curchar]
             token.lexeme = curchar
             curchar = getchar()
+
+        # Single line comment
+        elif curchar == '#':
+            token.category = COMMENT_SINGLE
+            while True:
+                token.lexeme += curchar
+                curchar = getchar()
+                if curchar == '\n':
+                    break
         
         # Anything else is error
         else:
