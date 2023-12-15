@@ -29,13 +29,23 @@ PLUS        = 7     # '+'
 MINUS       = 8
 TIMES       = 9     # '*'
 NEWLINE     = 10
-ERROR       = 11    # if none of above, then error
+ERROR       = 255   # if none of above, then error
 
-# Displayable names for each token category
-catnames = [
-    'EOF', 'PRINT', 'UNSIGNEDINT', 'NAME', 'ASSIGNOP', 'LEFTPAREN', 'RIGHTPAREN',
-    'PLUS', 'MINUS', 'TIMES', 'NEWLINE', 'ERROR'
-]
+# Displayable names for each token category, using dictionary
+catnames = {
+    0:  'EOF',
+    1:  'PRINT',
+    2:  'UNSIGNEDINT',
+    3:  'NAME',
+    4:  'ASSIGNOP',
+    5:  'LEFTPAREN',
+    6:  'RIGHTPAREN',
+    7:  'PLUS',
+    8:  'MINUS',
+    9:  'TIMES',
+    10: 'NEWLINE',
+    255:'ERROR'
+}
 
 # Keywords and their token categories
 keywords = {
