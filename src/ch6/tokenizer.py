@@ -30,6 +30,7 @@ MINUS               = 8
 TIMES               = 9     # '*'
 NEWLINE             = 10
 COMMENT_SINGLE      = 11
+COMMENT_MULTIPLE    = 12
 ERROR               = 255   # if none of above, then error
 
 # Displayable names for each token category, using dictionary
@@ -46,6 +47,7 @@ catnames = {
     9:  'TIMES',
     10: 'NEWLINE',
     11: 'COMMENT_SINGLE',
+    12: 'COMMENT_MULTIPLE',
     255:'ERROR'
 }
 
@@ -101,6 +103,8 @@ def getchar():
 def tokenizer():
     global token
     curchar = ' '
+    # For multiple line comments
+    s_comment_multiple = False
 
     while True:
         # skip whitespace but not newlines
@@ -146,6 +150,32 @@ def tokenizer():
                 curchar = getchar()
                 if curchar == '\n':
                     break
+
+        # Multiple line comment opening
+        elif curchar == '/':
+            token.category = COMMENT_MULTIPLE
+            s_comment_multiple = True
+            # We want to include / into the token before it moves to check *
+            token.lexeme += curchar
+            curchar = getchar()
+            if curchar != '*':
+                raise RuntimeError('Invalid token - multiple line comment opening: read / and expecting *')
+            else:
+                while True:
+                    token.lexeme += curchar
+                    curchar = getchar()
+                    # Multiple line comment closing
+                    if curchar == '*':
+                        token.lexeme += curchar
+                        curchar = getchar()
+                        if curchar != '/':
+                            raise RuntimeError('Invalid token - multiple line comment ending: read * and expecting /')
+                        else:
+                            token.lexeme += curchar
+                            s_comment_multiple = False
+                            # Don't forget to move curchar forward. Each block must do this
+                            curchar = getchar()
+                            break        
         
         # Anything else is error
         else:
