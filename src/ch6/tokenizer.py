@@ -103,6 +103,7 @@ def getchar():
 def tokenizer():
     global token
     curchar = ' '
+    prevchar = ' '
     # For multiple line comments
     s_comment_multiple = False
 
@@ -153,29 +154,33 @@ def tokenizer():
 
         # Multiple line comment opening
         elif curchar == '/':
-            token.category = COMMENT_MULTIPLE
-            s_comment_multiple = True
             # We want to include / into the token before it moves to check *
             token.lexeme += curchar
             curchar = getchar()
             if curchar != '*':
                 raise RuntimeError('Invalid token - multiple line comment opening: read / and expecting *')
             else:
+                token.category = COMMENT_MULTIPLE
+                s_comment_multiple = True
+                # Get ready for closing check, we must have */ combo
+                # But it must be a new *, not the one we already met
+                # So move curchar first (here we don't care about prevchar)
+                token.lexeme += curchar
+                curchar = getchar()
                 while True:
-                    token.lexeme += curchar
+                    token.lexeme += curchar                  
+                    prevchar = curchar
                     curchar = getchar()
                     # Multiple line comment closing
-                    if curchar == '*':
+                    # We need to first check for / and then go back for *
+                    # Because of edge cases such as /*******/
+                    # if curchar == '*':
+                    if curchar == '/' and prevchar == '*':
                         token.lexeme += curchar
                         curchar = getchar()
-                        if curchar != '/':
-                            raise RuntimeError('Invalid token - multiple line comment ending: read * and expecting /')
-                        else:
-                            token.lexeme += curchar
-                            s_comment_multiple = False
-                            # Don't forget to move curchar forward. Each block must do this
-                            curchar = getchar()
-                            break        
+                        s_comment_multiple = False
+                        # Don't forget to move curchar forward. Each block must do this
+                        break        
         
         # Anything else is error
         else:
