@@ -31,6 +31,7 @@ TIMES               = 9     # '*'
 NEWLINE             = 10
 COMMENT_SINGLE      = 11
 COMMENT_MULTIPLE    = 12
+STRING              = 13
 ERROR               = 255   # if none of above, then error
 
 # Displayable names for each token category, using dictionary
@@ -48,6 +49,7 @@ catnames = {
     10: 'NEWLINE',
     11: 'COMMENT_SINGLE',
     12: 'COMMENT_MULTIPLE',
+    13: 'STRING',
     255:'ERROR'
 }
 
@@ -180,7 +182,29 @@ def tokenizer():
                         curchar = getchar()
                         s_comment_multiple = False
                         # Don't forget to move curchar forward. Each block must do this
-                        break        
+                        break 
+        
+        # Strings, we all love them. Only allow double quoted ones
+        elif curchar == '"':       
+            token.category = STRING
+            token.lexeme += curchar
+            curchar = getchar()
+            while True:
+                if curchar == '"':
+                    token.lexeme += curchar
+                    curchar = getchar()
+                    break
+                # Allow escape char
+                # Just read one more and move on
+                elif curchar == '\\':
+                    token.lexeme += curchar
+                    # Next char is the one to be excaped
+                    curchar = getchar()
+                    token.lexeme += curchar
+                    curchar = getchar()
+                else:
+                    token.lexeme += curchar
+                    curchar = getchar()
         
         # Anything else is error
         else:

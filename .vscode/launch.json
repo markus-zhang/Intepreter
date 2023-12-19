@@ -11,7 +11,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["C:/Dev/Projects/Intepreter/src/ch6/t1.in"]
+            "args": ["C:/Dev/Projects/Intepreter/src/ch6/string_test.in"]
         }
     ]
 }
