@@ -219,6 +219,125 @@ def tokenizer():
         if token.category == EOF:
             break
 
+# Parser code
+# Note that parser should be called after tokenizer
+# Each line of the following CFG is a rule (a Python function)
+###############################################################
+# <program>         -> <stmt>* EOF
+# <stmt>            -> <simplestmt> NEWLINE
+# <simplestmt>      -> <printstmt>
+# <simplestmt>      -> <assignmentstmt>
+# <printstmt>       -> 'print' '(' <expr> ')'
+# <assignmentstmt>  -> NAME '=' <expr>
+# <expr>            -> <term> ('+' <term>)*
+# <term>            -> <factor> ('*' <factor>)*
+# <factor>          -> '+' <factor>
+# <factor>          -> '-' <factor>
+# <factor>          -> NAME
+# <factor>          -> UNSIGNEDINT
+# <factor>          -> '(' <expr> ')'
+###############################################################
+def program():
+    # <program>         -> <stmt>* EOF
+    while token.category in [PRINT, NAME]:
+        stmt()
+    consume(EOF)
+
+def stmt():
+    # <stmt>            -> <simplestmt> NEWLINE
+    simplestmt()
+    consume(NEWLINE)
+
+def simplestmt():
+    # <simplestmt>      -> <printstmt>
+    # <simplestmt>      -> <assignmentstmt>
+    if token.category == PRINT:
+        printstmt()
+    elif token.category == NAME:
+        assignmentstmt()
+    else:
+        raise RuntimeError("Expecting PRINT or NAME") 
+    
+def printstmt():
+    # <printstmt>       -> 'print' '(' <expr> ')'
+    # We already know the first token must be 'print' so no need to check
+    advance()
+    consume(smalltokens['('])
+    expr()
+    consume(smalltokens[')'])
+
+def assignmentstmt():
+    # <assignmentstmt>  -> NAME '=' <expr>
+    # We already know the first token must be NAME so no need to check
+    # FIXME: Why doesn't the parser prepare a symbol table?
+    advance()
+    consume(smalltokens['='])
+    expr()
+
+def expr():
+    # <expr>            -> <term> ('+' <term>)*
+    # NOTE: There is no advance() at the end of the function
+    # NOTE: because expr() doesn't have a terminal symbol.
+    # NOTE: We will be able to find one in term() (or its functions)
+    term()
+    while token.category == smalltokens['+']:
+        advance()
+        term()
+
+def term():
+    # <term>            -> <factor> ('*' <factor>)*
+    factor()
+    while token.category == smalltokens['*']:
+        advance()
+        factor()
+
+def factor():
+    # <factor>          -> '+' <factor>
+    # <factor>          -> '-' <factor>
+    # <factor>          -> NAME
+    # <factor>          -> UNSIGNEDINT
+    # <factor>          -> '(' <expr> ')'
+    # FIXME: Why doesn't factor() actually, say, do some calculations?
+    # FIXME: Actually where is the parser tree?
+    if token.category == smalltokens['+']:
+        advance()
+        factor()
+    elif token.category == smalltokens['-']:
+        advance()
+        factor()
+    elif token.category == NAME:
+        advance()
+    elif token.category == UNSIGNEDINT:
+        advance()
+    elif token.category == smalltokens['(']:
+        advance()
+        expr()
+        consume(smalltokens[')'])
+    else:
+        raise RuntimeError("Expecting '+', '-', NAME, UNSIGNEDINT or '('")
+
+def advance():
+    """Advance the reading of a token from tokenlist.
+    The variable "token" always contain the current token
+    """
+    global token, tokenindex
+    # Move to next token
+    tokenindex += 1     
+    if tokenindex >= len(tokenlist):
+        # I assume the script ends gracefully once encounters an EOF token
+        raise RuntimeError("Unexpected end of file")    
+    token = tokenlist[tokenindex]
+
+def consume(expectedcat: int):
+    """Consumes the expected category.
+    Assuming we see a "print" token, we should expect a left parenthesis token immediately
+    """
+    if token.category != expectedcat:
+        raise RuntimeError(f"Expecting {catnames[expectedcat]} but get {catnames[token.category]}")
+    else:
+        advance()
+
+
 # main() reads input file and calls tokenizer
 def main():
     global source
