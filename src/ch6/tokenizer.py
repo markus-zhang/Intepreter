@@ -33,6 +33,7 @@ NEWLINE             = 10
 COMMENT_SINGLE      = 11
 COMMENT_MULTIPLE    = 12
 STRING              = 13
+PYPASS              = 14
 ERROR               = 255   # if none of above, then error
 
 # Displayable names for each token category, using dictionary
@@ -51,12 +52,14 @@ catnames = {
     11: 'COMMENT_SINGLE',
     12: 'COMMENT_MULTIPLE',
     13: 'STRING',
+    14: 'PYPASS',
     255:'ERROR'
 }
 
 # Keywords and their token categories
 keywords = {
-    'print': PRINT
+    'print': PRINT,
+    'pass': PYPASS
 }
 
 # One-character tokens and their token categories
@@ -228,8 +231,10 @@ def tokenizer():
 # <stmt>            -> <simplestmt> NEWLINE
 # <simplestmt>      -> <printstmt>
 # <simplestmt>      -> <assignmentstmt>
+# <simplestmt>      -> <passstmt>
 # <printstmt>       -> 'print' '(' <expr> ')'
 # <assignmentstmt>  -> NAME '=' <expr>
+# <passstmt>        -> 'pass'
 # <expr>            -> <term> ('+' <term>)*
 # <term>            -> <factor> ('*' <factor>)*
 # <factor>          -> '+' <factor>
@@ -256,6 +261,8 @@ def simplestmt():
         printstmt()
     elif token.category == NAME:
         assignmentstmt()
+    elif token.category == PYPASS:
+        passstmt()
     else:
         raise RuntimeError("Expecting PRINT or NAME") 
     
@@ -274,6 +281,9 @@ def assignmentstmt():
     advance()
     consume(smalltokens['='])
     expr()
+
+def passstmt():
+    advance()
 
 def expr():
     # <expr>            -> <term> ('+' <term>)*
