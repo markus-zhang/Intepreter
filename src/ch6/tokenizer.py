@@ -14,6 +14,7 @@ sourceindex = 0     # index into source
 line = 0            # current line number
 column = 0          # current column number
 tokenlist = []      # list of tokens to be consumed by parser
+tokenindex = 0
 prevchar = '\n'     # '\n' in prevchar signals start of new line
 blankline = True    # Set to False if line is not blank
 
@@ -337,6 +338,10 @@ def consume(expectedcat: int):
     else:
         advance()
 
+def parser():
+    program()
+    print("End of parsing")
+
 
 # main() reads input file and calls tokenizer
 def main():
@@ -366,6 +371,7 @@ def main():
     try:
         tokenizer()
         # print(tokenlist)
+        parser()
     except RuntimeError as emsg:
         # In output, show '\n' for newline
         lexeme = token.lexeme.replace('\n', '\\n')
