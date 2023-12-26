@@ -27,13 +27,14 @@ ASSIGNOP            = 4     # '=', assignment operator
 LEFTPAREN           = 5
 RIGHTPAREN          = 6
 PLUS                = 7     # '+'
-MINUS               = 8
+MINUS               = 8     # '-'
 TIMES               = 9     # '*'
 NEWLINE             = 10
 COMMENT_SINGLE      = 11
 COMMENT_MULTIPLE    = 12
 STRING              = 13
 PYPASS              = 14
+DIVISION            = 15
 ERROR               = 255   # if none of above, then error
 
 # Displayable names for each token category, using dictionary
@@ -53,6 +54,7 @@ catnames = {
     12: 'COMMENT_MULTIPLE',
     13: 'STRING',
     14: 'PYPASS',
+    15: 'DIVISION',
     255:'ERROR'
 }
 
@@ -70,6 +72,7 @@ smalltokens = {
     '+':    PLUS,
     '-':    MINUS,
     '*':    TIMES,
+    '/':    DIVISION,
     '\n':   NEWLINE,
     '':     EOF
 }
@@ -236,7 +239,9 @@ def tokenizer():
 # <assignmentstmt>  -> NAME '=' <expr>
 # <passstmt>        -> 'pass'
 # <expr>            -> <term> ('+' <term>)*
+# <expr>            -> <term> ('-' <term>)*
 # <term>            -> <factor> ('*' <factor>)*
+# <term>            -> <factor> ('/' <factor>)*
 # <factor>          -> '+' <factor>
 # <factor>          -> '-' <factor>
 # <factor>          -> NAME
@@ -287,18 +292,20 @@ def passstmt():
 
 def expr():
     # <expr>            -> <term> ('+' <term>)*
+    # <expr>            -> <term> ('-' <term>)*
     # NOTE: There is no advance() at the end of the function
     # NOTE: because expr() doesn't have a terminal symbol.
     # NOTE: We will be able to find one in term() (or its functions)
     term()
-    while token.category == smalltokens['+']:
+    while token.category == PLUS or token.category == MINUS:
         advance()
         term()
 
 def term():
     # <term>            -> <factor> ('*' <factor>)*
+    # <term>            -> <factor> ('/' <factor>)*
     factor()
-    while token.category == smalltokens['*']:
+    while token.category == TIMES or token.category == DIVISION:
         advance()
         factor()
 
@@ -310,20 +317,20 @@ def factor():
     # <factor>          -> '(' <expr> ')'
     # FIXME: Why doesn't factor() actually, say, do some calculations?
     # FIXME: Actually where is the parser tree?
-    if token.category == smalltokens['+']:
+    if token.category == PLUS:
         advance()
         factor()
-    elif token.category == smalltokens['-']:
+    elif token.category == MINUS:
         advance()
         factor()
     elif token.category == NAME:
         advance()
     elif token.category == UNSIGNEDINT:
         advance()
-    elif token.category == smalltokens['(']:
+    elif token.category == LEFTPAREN:
         advance()
         expr()
-        consume(smalltokens[')'])
+        consume(RIGHTPAREN)
     else:
         raise RuntimeError("Expecting '+', '-', NAME, UNSIGNEDINT or '('")
 
@@ -380,7 +387,6 @@ def main():
 
     try:
         tokenizer()
-        # print(tokenlist)
         parser()
     except RuntimeError as emsg:
         # In output, show '\n' for newline
