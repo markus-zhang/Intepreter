@@ -11,7 +11,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["C:/Dev/Projects/Intepreter/src/ch7/unary.in"]
+            "args": ["C:/Dev/Projects/Intepreter/src/ch8/i1.in"]
         }
     ]
 }
