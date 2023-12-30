@@ -8,7 +8,7 @@ class Token:
         self.lexeme = lexeme
 
 # Global Variables
-trace = False       # Controls token trace
+trace = True       # Controls token trace
 source = ''         # receives entire source program
 sourceindex = 0     # index into source
 line = 0            # current line number
@@ -196,20 +196,29 @@ def tokenizer():
         # Strings, we all love them. Only allow double quoted ones
         elif curchar == '"':       
             token.category = STRING
-            token.lexeme += curchar
+            # token.lexeme += curchar
             curchar = getchar()
             while True:
                 if curchar == '"':
-                    token.lexeme += curchar
+                    # token.lexeme += curchar
                     curchar = getchar()
                     break
                 # Allow escape char
                 # Just read one more and move on
                 elif curchar == '\\':
-                    token.lexeme += curchar
+                    # token.lexeme += curchar
                     # Next char is the one to be excaped
                     curchar = getchar()
-                    token.lexeme += curchar
+                    if curchar == 'n':
+                        token.lexeme += '\n'
+                    elif curchar == 't':
+                        token.lexeme += '\t'
+                    elif curchar == '\\':
+                        token.lexeme += '\\'
+                    elif curchar == 'b':
+                        token.lexeme += '\b'
+                    else:
+                        raise RuntimeError("Only allow escape chars: \\n, \\t, \\, \\b")
                     curchar = getchar()
                 else:
                     token.lexeme += curchar
@@ -223,7 +232,7 @@ def tokenizer():
         
         tokenlist.append(token)
         if trace:
-            print(f"{str(token.line)}   {str(token.column)}    {catnames[token.category]}   {token.lexeme}")
+            print(f"{str(token.line)}   {str(token.column)}    {catnames[token.category]}   {str(token.lexeme)}")
         
         if token.category == EOF:
             break
@@ -432,6 +441,8 @@ def main():
 
     try:
         tokenizer()
+        # Remove after fix_string is done
+        exit(0)
         parser()
     except RuntimeError as emsg:
         # In output, show '\n' for newline
