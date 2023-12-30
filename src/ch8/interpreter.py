@@ -371,7 +371,7 @@ def factor():
         expr()
         consume(RIGHTPAREN)
     else:
-        raise RuntimeError("Expecting '+', '-', NAME, UNSIGNEDINT or '('")
+        raise RuntimeError("Expecting a valid expression.")
 
 def advance():
     """Advance the reading of a token from tokenlist.
@@ -436,7 +436,12 @@ def main():
     except RuntimeError as emsg:
         # In output, show '\n' for newline
         lexeme = token.lexeme.replace('\n', '\\n')
-        print(f"\nError on '{lexeme}' ' line {str(token.line)} ' column {str(token.column)}'")
+        # print(f"\nError on '{lexeme}' ' line {str(token.line)} ' column {str(token.column)}'")
+        # Added the feature to enrigh Runtime Error message:
+        # Show the line with a caret pointing to the token
+        sourcesplit = source.split('\n')
+        print(sourcesplit[token.line - 1])
+        print(' ' * (token.column - 1) + '^')
         print(emsg)
         sys.exit(1)
 

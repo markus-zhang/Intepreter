@@ -10,8 +10,9 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": true,
-            "args": ["C:/Dev/Projects/Intepreter/src/ch8/i1.in"]
+            "stopOnEntry": true,
+            "justMyCode": false,
+            "args": ["C:/Dev/Projects/Intepreter/src/ch8/p0802e.in"]
         }
     ]
 }
