@@ -1,9 +1,8 @@
 a = "I love you!"
 b = "
 blah "
-c = 
-" fggfg
-
-"
-d="Hi\nHow are you?"
-e = "Blah\t here is a tab"
+c= 6
+print(a)
+print(b)
+print(a+b)
+print(c+a)

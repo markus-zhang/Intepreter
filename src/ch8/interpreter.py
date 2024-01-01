@@ -8,7 +8,7 @@ class Token:
         self.lexeme = lexeme
 
 # Global Variables
-trace = True       # Controls token trace
+trace = False       # Controls token trace
 source = ''         # receives entire source program
 sourceindex = 0     # index into source
 line = 0            # current line number
@@ -257,6 +257,7 @@ def tokenizer():
 # <factor>          -> '-' <factor>
 # <factor>          -> NAME
 # <factor>          -> UNSIGNEDINT
+# <factor>          -> STRING
 # <factor>          -> '(' <expr> ')'
 ###############################################################
 def program():
@@ -309,9 +310,8 @@ def passstmt():
 def expr():
     # <expr>            -> <term> ('+' <term>)*
     # <expr>            -> <term> ('-' <term>)*
-    # NOTE: There is no advance() at the end of the function
-    # NOTE: because expr() doesn't have a terminal symbol.
-    # NOTE: We will be able to find one in term() (or its functions)
+    
+    # NOTE: Now we introduce strings into the picture, we need to check types
     term()
     while token.category == PLUS or token.category == MINUS:
         # Now the left side was pushed onto the operand stack
@@ -323,6 +323,9 @@ def expr():
         term()
         # Now the right side was pushed onto the operand stack
         right = operandstack.pop()
+        # If not of the same type then we simply cannot add or subtract
+        if type(left) != type(right):
+            raise RuntimeError(f"Cannot add/subtract {type(left)} with {type(right)}")
         if optoken.category == PLUS:
             operandstack.append(left + right)
         else:
@@ -352,6 +355,7 @@ def factor():
     # <factor>          -> '-' <factor>
     # <factor>          -> NAME
     # <factor>          -> UNSIGNEDINT
+    # <factor>          -> STRING
     # <factor>          -> '(' <expr> ')'
     global operandstack, symboltable
     if token.category == PLUS:
@@ -374,6 +378,9 @@ def factor():
         advance()
     elif token.category == UNSIGNEDINT:
         operandstack.append(int(token.lexeme))
+        advance()
+    elif token.category == STRING:
+        operandstack.append(token.lexeme)
         advance()
     elif token.category == LEFTPAREN:
         advance()
@@ -441,8 +448,6 @@ def main():
 
     try:
         tokenizer()
-        # Remove after fix_string is done
-        exit(0)
         parser()
     except RuntimeError as emsg:
         # In output, show '\n' for newline
