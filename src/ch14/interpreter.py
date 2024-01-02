@@ -109,6 +109,8 @@ smalltokens = {
     '*':    TIMES,
     '/':    DIVISION,
     '\n':   NEWLINE,
+    ':':    COLON,
+    ',':    COMMA,
     '':     EOF
 }
 
@@ -236,6 +238,21 @@ def tokenizer():
                 token.lexeme += curchar
                 curchar = getchar()
 
+        # GREATERTHAN (>) and GREATEREQUAL (>=)
+        elif curchar == '>':
+            token.lexeme += curchar
+            nextchar = peekchar()
+            if nextchar != '=':
+                # Just a simple less-than operator
+                token.category = GREATERTHAN
+                curchar = getchar()
+            else:
+                # Now it's more interesting, a LESSEQUAL!
+                curchar = getchar()
+                token.category = GREATEREQUAL
+                token.lexeme += curchar
+                curchar = getchar()
+
         # Multiple line comment opening
         elif curchar == '/':
             # We want to include / into the token before it moves to check *
@@ -270,7 +287,7 @@ def tokenizer():
                         # Don't forget to move curchar forward. Each block must do this
                         break 
         
-        # Small tokens such as +, -, *, etc.
+        # The other small tokens such as +, -, *, etc.
         elif curchar in smalltokens:
             token.category = smalltokens[curchar]
             token.lexeme = curchar
