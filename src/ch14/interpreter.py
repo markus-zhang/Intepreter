@@ -206,6 +206,21 @@ def tokenizer():
                 token.lexeme += curchar
                 curchar = getchar()
 
+        # ASSIGNOP (=) and EQUAL (==)
+        elif curchar == '=':
+            token.lexeme += curchar
+            nextchar = peekchar()
+            if nextchar != '=':
+                # Just a simple assignment operator
+                token.category = ASSIGNOP
+                curchar = getchar()
+            else:
+                # Now it's more interesting, an EQUAL!
+                curchar = getchar()
+                token.category = EQUAL
+                token.lexeme += curchar
+                curchar = getchar()
+
         # Multiple line comment opening
         elif curchar == '/':
             # We want to include / into the token before it moves to check *
