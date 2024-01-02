@@ -199,7 +199,7 @@ def tokenizer():
             token.lexeme += curchar
             nextchar = peekchar()
             if nextchar != '=':
-                raise RuntimeError("Expecing a '=' following '!'")
+                raise RuntimeError("Expecting a '=' following '!'")
             else:
                 curchar = getchar()
                 token.category = NOTEQUAL
@@ -218,6 +218,21 @@ def tokenizer():
                 # Now it's more interesting, an EQUAL!
                 curchar = getchar()
                 token.category = EQUAL
+                token.lexeme += curchar
+                curchar = getchar()
+
+        # LESSTHAN (<) and LESSEQUAL (<=)
+        elif curchar == '<':
+            token.lexeme += curchar
+            nextchar = peekchar()
+            if nextchar != '=':
+                # Just a simple less-than operator
+                token.category = LESSTHAN
+                curchar = getchar()
+            else:
+                # Now it's more interesting, a LESSEQUAL!
+                curchar = getchar()
+                token.category = LESSEQUAL
                 token.lexeme += curchar
                 curchar = getchar()
 
