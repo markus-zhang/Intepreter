@@ -8,7 +8,7 @@ class Token:
         self.lexeme = lexeme
 
 # Global Variables
-trace = False       # Controls token trace
+trace = True        # Controls token trace
 source = ''         # receives entire source program
 sourceindex = 0     # index into source
 line = 0            # current line number
@@ -37,6 +37,19 @@ COMMENT_MULTIPLE    = 12
 STRING              = 13
 PYPASS              = 14
 DIVISION            = 15
+PYIF                = 16
+PYWHILE             = 17
+PYTRUE              = 18
+PYFALSE             = 19
+PYNONE              = 20
+EQUAL               = 21
+NOTEQUAL            = 22
+LESSTHAN            = 23
+LESSEQUAL           = 24
+GREATERTHAN         = 25
+GREATEREQUAL        = 26
+COMMA               = 27
+COLON               = 28
 ERROR               = 255   # if none of above, then error
 
 # Displayable names for each token category, using dictionary
@@ -57,18 +70,38 @@ catnames = {
     13: 'STRING',
     14: 'PYPASS',
     15: 'DIVISION',
+    16: 'PYIF',
+    17: 'PYWHILE',
+    18: 'PYTRUE',
+    19: 'PYFALSE',
+    20: 'PYNONE',
+    21: 'EQUAL',
+    22: 'NOTEQUAL',
+    23: 'LESSTHAN',
+    24: 'LESSEQUAL',
+    25: 'GREATERTHAN',
+    26: 'GREATEREQUAL',
+    27: 'COMMA',
+    28: 'COLON',
     255:'ERROR'
 }
 
 # Keywords and their token categories
 keywords = {
     'print': PRINT,
-    'pass': PYPASS
+    'pass': PYPASS,
+    'if': PYIF,
+    'while': PYWHILE,
+    'True': PYTRUE,
+    'False': PYFALSE,
+    'None': PYNONE
 }
 
 # One-character tokens and their token categories
 smalltokens = {
     '=':    ASSIGNOP,
+    '==':   EQUAL,
+    '!=':   NOTEQUAL,
     '(':    LEFTPAREN,
     ')':    RIGHTPAREN,
     '+':    PLUS,
@@ -111,6 +144,10 @@ def getchar():
     else:
         return c
 
+def peekchar():
+    global sourceindex
+    return source[sourceindex]
+
 def tokenizer():
     global token
     curchar = ' '
@@ -148,12 +185,6 @@ def tokenizer():
             if token.lexeme in keywords:
                 token.category = keywords[token.lexeme]
 
-        # Small tokens such as +, -, *, etc.
-        elif curchar in smalltokens:
-            token.category = smalltokens[curchar]
-            token.lexeme = curchar
-            curchar = getchar()
-
         # Single line comment
         elif curchar == '#':
             token.category = COMMENT_SINGLE
@@ -163,20 +194,36 @@ def tokenizer():
                 if curchar == '\n':
                     break
 
+        # Not equal
+        elif curchar == '!':
+            token.lexeme += curchar
+            nextchar = peekchar()
+            if nextchar != '=':
+                raise RuntimeError("Expecing a '=' following '!'")
+            else:
+                curchar = getchar()
+                token.category = NOTEQUAL
+                token.lexeme += curchar
+                curchar = getchar()
+
         # Multiple line comment opening
         elif curchar == '/':
             # We want to include / into the token before it moves to check *
             token.lexeme += curchar
-            curchar = getchar()
-            if curchar != '*':
-                raise RuntimeError('Invalid token - multiple line comment opening: read / and expecting *')
+            # Peek, don't Get
+            nextchar = peekchar()
+            if nextchar != '*':
+                # Must be the division token
+                token.category = smalltokens[curchar]
+                token.lexeme = curchar
+                # Do not get a new char, we need to keep the current char
+                curchar = getchar()
             else:
                 token.category = COMMENT_MULTIPLE
                 s_comment_multiple = True
                 # Get ready for closing check, we must have */ combo
                 # But it must be a new *, not the one we already met
                 # So move curchar first (here we don't care about prevchar)
-                token.lexeme += curchar
                 curchar = getchar()
                 while True:
                     token.lexeme += curchar                  
@@ -192,6 +239,12 @@ def tokenizer():
                         s_comment_multiple = False
                         # Don't forget to move curchar forward. Each block must do this
                         break 
+        
+        # Small tokens such as +, -, *, etc.
+        elif curchar in smalltokens:
+            token.category = smalltokens[curchar]
+            token.lexeme = curchar
+            curchar = getchar()
         
         # Strings, we all love them. Only allow double quoted ones
         elif curchar == '"':       
@@ -236,6 +289,14 @@ def tokenizer():
         
         if token.category == EOF:
             break
+
+def removecomment():
+    """Remove all comments from token list
+    """
+    global tokenlist
+    for token in tokenlist:
+        if token.category == COMMENT_MULTIPLE or token.category == COMMENT_SINGLE:
+            tokenlist.remove(token)
 
 # Parser code
 # Note that parser should be called after tokenizer
@@ -448,6 +509,8 @@ def main():
 
     try:
         tokenizer()
+        removecomment()
+        exit(0)
         parser()
     except RuntimeError as emsg:
         # In output, show '\n' for newline
