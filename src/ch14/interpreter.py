@@ -50,6 +50,7 @@ GREATERTHAN         = 25
 GREATEREQUAL        = 26
 COMMA               = 27
 COLON               = 28
+INDENTATION         = 29
 ERROR               = 255   # if none of above, then error
 
 # Displayable names for each token category, using dictionary
@@ -83,6 +84,7 @@ catnames = {
     26: 'GREATEREQUAL',
     27: 'COMMA',
     28: 'COLON',
+    29: 'INDENTATION',
     255:'ERROR'
 }
 
@@ -113,6 +115,10 @@ smalltokens = {
     ',':    COMMA,
     '':     EOF
 }
+
+# For indentation and dedentation
+# Setup as column 1
+indentstack = [1]
 
 # getchar() gets next char from source and adjusts line and column
 def getchar():
@@ -148,7 +154,10 @@ def getchar():
 
 def peekchar():
     global sourceindex
-    return source[sourceindex]
+    if sourceindex >= len(source) - 1:
+        return ''
+    else:
+        return source[sourceindex]
 
 def tokenizer():
     global token
@@ -164,8 +173,33 @@ def tokenizer():
 
         token = Token(line, column, None, '')
 
+        # How do we track indentation and dedentation?
+        # We should start tracking once we reach a CRLC char
+        # If the next char is a space of some sort, 
+        # we count the number of spaces and add into the indentation
+        if curchar == '\n':
+            # Special case for EOF, which is always after a CRLF due to our treatment
+            if peekchar() == '':
+                # curchar is EOF
+                curchar = getchar()
+                continue
+            if peekchar() == ' ':
+                token.category = INDENTATION
+                # As the stack, we start from column 1
+                indentation_count = 1
+                while True:
+                    curchar = getchar()
+                    if curchar != ' ':
+                        # Don't forget to push the count to stack!
+                        indentstack.append(indentation_count)
+                        break
+                    else:
+                        indentation_count += 1
+                        token.lexeme += curchar
+
+
         # Start of unsigned int?
-        if curchar.isdigit():
+        elif curchar.isdigit():
             token.category = UNSIGNEDINT
             while True:
                 token.lexeme += curchar
