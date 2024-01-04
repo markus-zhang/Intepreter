@@ -18,7 +18,10 @@ tokenindex = 0
 prevchar = '\n'     # '\n' in prevchar signals start of new line
 blankline = True    # Set to False if line is not blank
 symboltable = {}    # Symbol Table for the interpreter
-operandstack = []          # Use a list for the stack
+operandstack = []   # Use a list for the stack
+# For indentation and dedentation
+# Setup as column 1
+indentstack = [1]
 
 # Category constants
 EOF                 = 0
@@ -50,7 +53,8 @@ GREATERTHAN         = 25
 GREATEREQUAL        = 26
 COMMA               = 27
 COLON               = 28
-INDENTATION         = 29
+INDENT              = 29
+DEDENT              = 30
 ERROR               = 255   # if none of above, then error
 
 # Displayable names for each token category, using dictionary
@@ -85,6 +89,7 @@ catnames = {
     27: 'COMMA',
     28: 'COLON',
     29: 'INDENTATION',
+    30: 'DEDENTATION',
     255:'ERROR'
 }
 
@@ -115,10 +120,6 @@ smalltokens = {
     ',':    COMMA,
     '':     EOF
 }
-
-# For indentation and dedentation
-# Setup as column 1
-indentstack = [1]
 
 # getchar() gets next char from source and adjusts line and column
 def getchar():
@@ -163,8 +164,6 @@ def tokenizer():
     global token
     curchar = ' '
     prevchar = ' '
-    # For multiple line comments
-    s_comment_multiple = False
 
     while True:
         # skip whitespace but not newlines
@@ -177,13 +176,18 @@ def tokenizer():
         # We should start tracking once we reach a CRLC char
         # If the next char is a space of some sort, 
         # we count the number of spaces and add into the indentation
+        """
         if curchar == '\n':
+            # TODO: Set up a flag for the main loop
+            # TODO: Move the whole following logic to a new if
+            # TODO: If the flag is set, start calculate indentation
+            flag_indentation = True
             # Special case for EOF, which is always after a CRLF due to our treatment
             if peekchar() == '':
                 # curchar is EOF
                 curchar = getchar()
                 continue
-            if peekchar() == ' ':
+            elif peekchar() == ' ':
                 token.category = INDENTATION
                 # As the stack, we start from column 1
                 indentation_count = 1
@@ -196,10 +200,16 @@ def tokenizer():
                     else:
                         indentation_count += 1
                         token.lexeme += curchar
-
+            # Special case for empty line, CRLF after CRLF
+            # FIXME: Still buggy as it removes one NEWLINE
+            elif peekchar() == '\n':
+                curchar = getchar()
+                token.category = NEWLINE
+                token.lexeme += curchar
+        """
 
         # Start of unsigned int?
-        elif curchar.isdigit():
+        if curchar.isdigit():
             token.category = UNSIGNEDINT
             while True:
                 token.lexeme += curchar
@@ -326,6 +336,9 @@ def tokenizer():
             token.category = smalltokens[curchar]
             token.lexeme = curchar
             curchar = getchar()
+            # Signal to tokenizer to calculate indentations
+            if token.category == NEWLINE:
+                flag_indentation = True
         
         # Strings, we all love them. Only allow double quoted ones
         elif curchar == '"':       
@@ -364,12 +377,61 @@ def tokenizer():
             token.lexeme = curchar
             raise RuntimeError('Invalid token')
         
-        tokenlist.append(token)
-        if trace:
-            print(f"{str(token.line)}   {str(token.column)}    {catnames[token.category]}   {str(token.lexeme)}")
+        """
+        Check for indentations AFTER a NEWLINE has been appended
+        Two cases: 
+            1. the first line has leading spaces, so len(tokenlist) == 0
+            2. the previous appended token is NEWLINE, and now we have a new token
+
+        What do we do? Assuming we have indentstack as [1, 4, 7, 10].
+        We check the column of the new token:
+            - If it's indentstack[-1] < column, we append it, and add an INDENT token
+            - If it's indentstack[-1] > column, we pop indentstack until we find one matching:
+                - For each indent in indentstack, if indent > column, pop and add a DEDENT token
+                - If indent == column, quit without popping it
+                - If indent < column, something is wrong, raise a RuntimeError
+        """
+        if len(tokenlist) == 0 or tokenlist[-1].category == NEWLINE:
+            if indentstack[-1] < token.column:
+                # Append and add an INDENT
+                token_indent = Token(line, 1, INDENT, '')
+                # The beauty is that INDENT is created afterwards but appended before the first "real" token of the line
+                tokenlist.append(token_indent)
+                indentstack.append(token.column)
+            else:
+                while True:
+                    if indentstack[-1] == token.column:
+                        # Do nothing, no change in indentation of dedentation
+                        break
+                    if indentstack[-1] > token.column:
+                        # Pop and add a DEDENT
+                        # Do NOT pollute the original token as it is not appended yet
+                        # Same line as the following token(parsed but yet appended)
+                        # I put column as 1 but this is not important
+                        token_extra = Token(line, 1, DEDENT, '')
+                        # The beauty is that DEDENT is created afterwards but appended before the first "real" token of the line
+                        tokenlist.append(token_extra)
+                        indentstack.pop()
+                    else:
+                        raise RuntimeError(f"Incorrect dedentation {token.column} for {indentstack}")
         
+        tokenlist.append(token)
+        
+        trace()
+
         if token.category == EOF:
+            traceall()
+            print(indentstack)
             break
+
+def trace():
+    if trace:
+        print(f"{str(token.line)}   {str(token.column)}    {catnames[token.category]}   {str(token.lexeme)}")
+
+def traceall():
+    if trace:
+        for token in tokenlist:
+            print(f"{str(token.line)}   {str(token.column)}    {catnames[token.category]}   {str(token.lexeme)}")
 
 def removecomment():
     """Remove all comments from token list
@@ -596,7 +658,7 @@ def main():
     except RuntimeError as emsg:
         # In output, show '\n' for newline
         lexeme = token.lexeme.replace('\n', '\\n')
-        # print(f"\nError on '{lexeme}' ' line {str(token.line)} ' column {str(token.column)}'")
+        print(f"\nError on '{lexeme}' ' line {str(token.line)} ' column {str(token.column)}'")
         # Added the feature to enrigh Runtime Error message:
         # Show the line with a caret pointing to the token
         sourcesplit = source.split('\n')
