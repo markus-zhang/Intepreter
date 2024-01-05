@@ -327,7 +327,6 @@ def tokenizer():
                     if curchar == '/' and prevchar == '*':
                         token.lexeme += curchar
                         curchar = getchar()
-                        s_comment_multiple = False
                         # Don't forget to move curchar forward. Each block must do this
                         break 
         
@@ -341,12 +340,12 @@ def tokenizer():
                 flag_indentation = True
         
         # Strings, we all love them. Only allow double quoted ones
-        elif curchar == '"':       
+        elif curchar == '\'':       
             token.category = STRING
             # token.lexeme += curchar
             curchar = getchar()
             while True:
-                if curchar == '"':
+                if curchar == '\'':
                     # token.lexeme += curchar
                     curchar = getchar()
                     break
@@ -398,6 +397,8 @@ def tokenizer():
                 # The beauty is that INDENT is created afterwards but appended before the first "real" token of the line
                 tokenlist.append(token_indent)
                 indentstack.append(token.column)
+                if trace:
+                    print(f"{str(token_indent.line)}   {str(token_indent.column)}    {catnames[token_indent.category]}   {str(token_indent.lexeme)}")
             else:
                 while True:
                     if indentstack[-1] == token.column:
@@ -408,9 +409,11 @@ def tokenizer():
                         # Do NOT pollute the original token as it is not appended yet
                         # Same line as the following token(parsed but yet appended)
                         # I put column as 1 but this is not important
-                        token_extra = Token(line, 1, DEDENT, '')
+                        token_dedent = Token(line, 1, DEDENT, '')
                         # The beauty is that DEDENT is created afterwards but appended before the first "real" token of the line
-                        tokenlist.append(token_extra)
+                        tokenlist.append(token_dedent)
+                        if trace:
+                            print(f"{str(token_dedent.line)}   {str(token_dedent.column)}    {catnames[token_dedent.category]}   {str(token_dedent.lexeme)}")
                         indentstack.pop()
                     else:
                         raise RuntimeError(f"Incorrect dedentation {token.column} for {indentstack}")
