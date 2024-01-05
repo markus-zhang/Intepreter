@@ -26,7 +26,7 @@ indentstack = [1]
 # Category constants
 EOF                 = 0
 PRINT               = 1
-UNSIGNEDINT         = 2
+UNSIGNEDNUM         = 2
 NAME                = 3     # identifier that is not a keyword
 ASSIGNOP            = 4     # '=', assignment operator
 LEFTPAREN           = 5
@@ -61,7 +61,7 @@ ERROR               = 255   # if none of above, then error
 catnames = {
     0:  'EOF',
     1:  'PRINT',
-    2:  'UNSIGNEDINT',
+    2:  'UNSIGNEDNUM',
     3:  'NAME',
     4:  'ASSIGNOP',
     5:  'LEFTPAREN',
@@ -172,51 +172,25 @@ def tokenizer():
 
         token = Token(line, column, None, '')
 
-        # How do we track indentation and dedentation?
-        # We should start tracking once we reach a CRLC char
-        # If the next char is a space of some sort, 
-        # we count the number of spaces and add into the indentation
-        """
-        if curchar == '\n':
-            # TODO: Set up a flag for the main loop
-            # TODO: Move the whole following logic to a new if
-            # TODO: If the flag is set, start calculate indentation
-            flag_indentation = True
-            # Special case for EOF, which is always after a CRLF due to our treatment
-            if peekchar() == '':
-                # curchar is EOF
-                curchar = getchar()
-                continue
-            elif peekchar() == ' ':
-                token.category = INDENTATION
-                # As the stack, we start from column 1
-                indentation_count = 1
-                while True:
-                    curchar = getchar()
-                    if curchar != ' ':
-                        # Don't forget to push the count to stack!
-                        indentstack.append(indentation_count)
-                        break
-                    else:
-                        indentation_count += 1
-                        token.lexeme += curchar
-            # Special case for empty line, CRLF after CRLF
-            # FIXME: Still buggy as it removes one NEWLINE
-            elif peekchar() == '\n':
-                curchar = getchar()
-                token.category = NEWLINE
-                token.lexeme += curchar
-        """
-
         # Start of unsigned int?
-        if curchar.isdigit():
-            token.category = UNSIGNEDINT
+        if curchar.isdigit() or curchar == '.':
+            token.category = UNSIGNEDNUM
+            flag_fp = False
+            if curchar == '.':
+                flag_fp = True
             while True:
                 token.lexeme += curchar
                 curchar = getchar()
-                if not curchar.isdigit():
-                    # print(token.lexeme)
-                    break
+                if flag_fp:
+                    if curchar == '.':
+                        raise RuntimeError("A numerical value cannot have two decimal points")
+                    elif not curchar.isdigit():
+                        break
+                else:
+                    if curchar == '.':
+                        flag_fp = True
+                    elif not curchar.isdigit():
+                        break
 
         # Start of name?
         elif curchar.isalpha() or curchar == '_':
@@ -363,6 +337,8 @@ def tokenizer():
                         token.lexeme += '\\'
                     elif curchar == 'b':
                         token.lexeme += '\b'
+                    elif curchar == '\'':
+                        token.lexeme += "'"
                     else:
                         raise RuntimeError("Only allow escape chars: \\n, \\t, \\, \\b")
                     curchar = getchar()
