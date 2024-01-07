@@ -55,6 +55,7 @@ COMMA               = 27
 COLON               = 28
 INDENT              = 29
 DEDENT              = 30
+PYELSE              = 31
 ERROR               = 255   # if none of above, then error
 
 # Displayable names for each token category, using dictionary
@@ -90,18 +91,20 @@ catnames = {
     28: 'COLON',
     29: 'INDENTATION',
     30: 'DEDENTATION',
+    31: 'PYELSE',
     255:'ERROR'
 }
 
 # Keywords and their token categories
 keywords = {
-    'print': PRINT,
-    'pass': PYPASS,
-    'if': PYIF,
-    'while': PYWHILE,
-    'True': PYTRUE,
-    'False': PYFALSE,
-    'None': PYNONE
+    'print':    PRINT,
+    'pass':     PYPASS,
+    'if':       PYIF,
+    'else':     PYELSE,
+    'while':    PYWHILE,
+    'True':     PYTRUE,
+    'False':    PYFALSE,
+    'None':     PYNONE
 }
 
 # One-character tokens and their token categories
@@ -426,12 +429,34 @@ def removecomment():
 ###############################################################
 # <program>         -> <stmt>* EOF
 # <stmt>            -> <simplestmt> NEWLINE
+# <stmt>            -> <compoundstmt>
 # <simplestmt>      -> <printstmt>
 # <simplestmt>      -> <assignmentstmt>
 # <simplestmt>      -> <passstmt>
+# <compoundstmt>    -> <whilestmt>
+# <compoundstmt>    -> <ifstmt>
 # <printstmt>       -> 'print' '(' <expr> ')'
 # <assignmentstmt>  -> NAME '=' <expr>
 # <passstmt>        -> 'pass'
+# <whilestmt>       -> 'while' <relexpr> ':' <codeblock>
+# <ifstmt>          -> 'if' <relexpr> ':' <codeblock> ['else' ':' <codeblock>]
+"""
+<codeblock> is not recursive, because it is not neccesarily true that every line in a while/if block needs an indent-dedent:
+- Nested:
+# Every line is wrapped in an indent-dedent
+while a < b:
+    if b == c:
+        # do something could be a simple print()
+        do something
+- Not nested:
+while a < b:
+    # do something could be a simple print()
+    do something
+    # no indent-dedent
+    do something else
+"""
+# <codeblock>       -> <NEWLINE> 'INDENT' <stmt>+ 'DEDENT'
+# <relexpr>         -> <expr> [ ('<' | '<=' | '==' | '!=' | '>=' | '>') <expr>]
 # <expr>            -> <term> ('+' <term>)*
 # <expr>            -> <term> ('-' <term>)*
 # <term>            -> <factor> ('*' <factor>)*
@@ -439,9 +464,12 @@ def removecomment():
 # <factor>          -> '+' <factor>
 # <factor>          -> '-' <factor>
 # <factor>          -> NAME
-# <factor>          -> UNSIGNEDINT
+# <factor>          -> UNSIGNEDNUM
 # <factor>          -> STRING
-# <factor>          -> '(' <expr> ')'
+# <factor>          -> 'True'
+# <factor>          -> 'False'
+# <factor>          -> 'None'
+# <factor>          -> '(' <relexpr> ')'
 ###############################################################
 def program():
     # <program>         -> <stmt>* EOF
