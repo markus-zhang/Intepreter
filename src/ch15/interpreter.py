@@ -435,8 +435,15 @@ def removecomment():
 # <simplestmt>      -> <passstmt>
 # <compoundstmt>    -> <whilestmt>
 # <compoundstmt>    -> <ifstmt>
-# <printstmt>       -> 'print' '(' <expr> ')'
-# <assignmentstmt>  -> NAME '=' <expr>
+"""
+<printstmt> needs to successfully parse the following:
+print()
+print(abc)
+print(abc, dr, fe)
+print(abc, dr, fe,) # Last comma should be accepted but ignored
+"""
+# <printstmt>       -> 'print' '(' [ <relexpr> (',' <relexpr>)* [ ',' ]] ')'
+# <assignmentstmt>  -> NAME '=' <relexpr>
 # <passstmt>        -> 'pass'
 # <whilestmt>       -> 'while' <relexpr> ':' <codeblock>
 # <ifstmt>          -> 'if' <relexpr> ':' <codeblock> ['else' ':' <codeblock>]
@@ -479,12 +486,19 @@ def program():
 
 def stmt():
     # <stmt>            -> <simplestmt> NEWLINE
-    simplestmt()
-    consume(NEWLINE)
+    # <stmt>            -> <compoundstmt>
+    if token.category in [PRINT, NAME, PYPASS]:
+        simplestmt()
+        consume(NEWLINE)
+    elif token.category in [PYIF, PYWHILE]:
+        compoundstmt()
+    else:
+        raise RuntimeError(f"Expecting print, a name, pass, if, while, but get {token.category}")
 
 def simplestmt():
     # <simplestmt>      -> <printstmt>
     # <simplestmt>      -> <assignmentstmt>
+    # <simplestmt>      -> <passstmt>
     if token.category == PRINT:
         printstmt()
     elif token.category == NAME:
@@ -495,28 +509,90 @@ def simplestmt():
         raise RuntimeError("Expecting PRINT or NAME") 
     
 def printstmt():
-    # <printstmt>       -> 'print' '(' <expr> ')'
+    # <printstmt>       -> 'print' '(' [ <relexpr> (',' <relexpr>)* [ ',' ]] ')'
     # We already know the first token must be 'print' so no need to check
     advance()
     consume(LEFTPAREN)
-    expr()  # Expect expr() to push the result onto the top of the operand stack
-    print(operandstack.pop())
+    if token.category != RIGHTPAREN:
+        # Must have a <relexpr>
+        relexpr()
+        print(operandstack.pop())
+        # Is there a comma?
+        while token.category == COMMA:
+            advance()
+            # Is this the last comma before ')'?
+            if token.category == RIGHTPAREN:
+                break
+            else:
+                # Should be another relexpr
+                relexpr()
+                print(operandstack.pop())
     consume(RIGHTPAREN)
+    """
+    if token.category == RIGHTPAREN:
+        # Case 0: print()
+        print()
+        advance()
+    else:
+        # Must have at least one <relexpr>
+        relexpr()
+        print(operandstack.pop())
+        # Case 1: print('blah')
+        if token.category == RIGHTPAREN:
+            # Done
+            advance()
+            return
+        while token.category == COMMA:
+            advance()
+            # Case 3: print(1, 2, 'Blah',)
+            if token.category == RIGHTPAREN:
+                # Done
+                advance()
+                break
+            else:
+                relexpr()
+                print(operandstack.pop())
+        # Case 2: print(1, 2, 'Blah')
+        if token.category == RIGHTPAREN:
+            # Done, print(1, 2, 'Blah')
+            advance()
+    # expr()  # Expect expr() to push the result onto the top of the operand stack
+    # consume(RIGHTPAREN)
+    """
 
 def assignmentstmt():
-    # <assignmentstmt>  -> NAME '=' <expr>
+    # <assignmentstmt>  -> NAME '=' <relexpr>
     # We already know the first token must be NAME so no need to check
     # Pick up the token as symbol
     left = token.lexeme
     advance()
     consume(ASSIGNOP)
-    expr()
+    relexpr()
     # expr() pushes onto top of the operand stack, update symbol table
     global symboltable
     symboltable[left] = operandstack.pop()
 
 def passstmt():
     advance()
+
+def compoundstmt():
+    if token.category == PYIF:
+        ifstmt()
+    elif token.category == PYWHILE:
+        whilestmt()
+
+def ifstmt():
+    pass
+
+def whilestmt():
+    pass
+
+def relexpr():
+    # <relexpr>         -> <expr> [ ('<' | '<=' | '==' | '!=' | '>=' | '>') <expr>]
+    expr()
+    if token.category in [LESSTHAN, LESSEQUAL, EQUAL, NOTEQUAL, GREATEREQUAL, GREATERTHAN]:
+        advance()
+        expr()
 
 def expr():
     # <expr>            -> <term> ('+' <term>)*
@@ -565,9 +641,12 @@ def factor():
     # <factor>          -> '+' <factor>
     # <factor>          -> '-' <factor>
     # <factor>          -> NAME
-    # <factor>          -> UNSIGNEDINT
+    # <factor>          -> UNSIGNEDNUM
     # <factor>          -> STRING
-    # <factor>          -> '(' <expr> ')'
+    # <factor>          -> 'True'
+    # <factor>          -> 'False'
+    # <factor>          -> 'None'
+    # <factor>          -> '(' <relexpr> ')'
     global operandstack, symboltable
     if token.category == PLUS:
         advance()
@@ -593,9 +672,19 @@ def factor():
     elif token.category == STRING:
         operandstack.append(token.lexeme)
         advance()
+    # TODO: For the next 3 elifs, change the appended value to maybe their Python ones? For example, instead of pushing 'True' as a string, push True as a value?
+    elif token.category == PYTRUE:
+        operandstack.append(True)
+        advance()
+    elif token.category == PYFALSE:
+        operandstack.append(False)
+        advance()
+    elif token.category == PYNONE:
+        operandstack.append(None)
+        advance()
     elif token.category == LEFTPAREN:
         advance()
-        expr()
+        relexpr()
         consume(RIGHTPAREN)
     else:
         raise RuntimeError("Expecting a valid expression.")
@@ -660,7 +749,6 @@ def main():
     try:
         tokenizer()
         removecomment()
-        exit(0)
         parser()
     except RuntimeError as emsg:
         # In output, show '\n' for newline
