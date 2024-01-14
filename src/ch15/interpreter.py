@@ -124,6 +124,8 @@ smalltokens = {
     '':     EOF
 }
 
+stmttokens = [PYIF, PYWHILE, PRINT, PYPASS, NAME]
+
 # getchar() gets next char from source and adjusts line and column
 def getchar():
     global sourceindex, column, line, prevchar, blankline
@@ -480,7 +482,7 @@ while a < b:
 ###############################################################
 def program():
     # <program>         -> <stmt>* EOF
-    while token.category in [PRINT, NAME]:
+    while token.category in stmttokens:
         stmt()
     consume(EOF)
 
@@ -576,16 +578,38 @@ def passstmt():
     advance()
 
 def compoundstmt():
+    # <compoundstmt>    -> <whilestmt>
+    # <compoundstmt>    -> <ifstmt>
     if token.category == PYIF:
         ifstmt()
     elif token.category == PYWHILE:
         whilestmt()
 
 def ifstmt():
-    pass
+    # <ifstmt>          -> 'if' <relexpr> ':' <codeblock> ['else' ':' <codeblock>]
+    consume(PYIF)
+    relexpr()
+    consume(COLON)
+    codeblock()
+    if token.category == PYELSE:
+        advance()
+        consume(COLON)
+        codeblock()
 
 def whilestmt():
-    pass
+    # <whilestmt>       -> 'while' <relexpr> ':' <codeblock>
+    consume(PYWHILE)
+    relexpr()
+    consume(COLON)
+    codeblock()
+
+def codeblock():
+    # <codeblock>       -> <NEWLINE> 'INDENT' <stmt>+ 'DEDENT'
+    consume(NEWLINE)
+    consume(INDENT)
+    while token.category in [PRINT, NAME, PYPASS, PYIF, PYWHILE]:
+        stmt()
+    consume(DEDENT)
 
 def relexpr():
     # <relexpr>         -> <expr> [ ('<' | '<=' | '==' | '!=' | '>=' | '>') <expr>]
