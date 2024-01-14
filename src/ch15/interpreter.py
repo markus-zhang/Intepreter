@@ -8,7 +8,7 @@ class Token:
         self.lexeme = lexeme
 
 # Global Variables
-trace = True        # Controls token trace
+trace = False        # Controls token trace
 source = ''         # receives entire source program
 sourceindex = 0     # index into source
 line = 0            # current line number
@@ -378,7 +378,7 @@ def tokenizer():
                 # The beauty is that INDENT is created afterwards but appended before the first "real" token of the line
                 tokenlist.append(token_indent)
                 indentstack.append(token.column)
-                if trace:
+                if trace is True:
                     print(f"{str(token_indent.line)}   {str(token_indent.column)}    {catnames[token_indent.category]}   {str(token_indent.lexeme)}")
             else:
                 while True:
@@ -393,7 +393,7 @@ def tokenizer():
                         token_dedent = Token(line, 1, DEDENT, '')
                         # The beauty is that DEDENT is created afterwards but appended before the first "real" token of the line
                         tokenlist.append(token_dedent)
-                        if trace:
+                        if trace is True:
                             print(f"{str(token_dedent.line)}   {str(token_dedent.column)}    {catnames[token_dedent.category]}   {str(token_dedent.lexeme)}")
                         indentstack.pop()
                     else:
@@ -404,16 +404,17 @@ def tokenizer():
         trace()
 
         if token.category == EOF:
-            traceall()
-            print(indentstack)
+            if trace is True:
+                traceall()
+                print(indentstack)
             break
 
 def trace():
-    if trace:
+    if trace is True:
         print(f"{str(token.line)}   {str(token.column)}    {catnames[token.category]}   {str(token.lexeme)}")
 
 def traceall():
-    if trace:
+    if trace is True:
         for token in tokenlist:
             print(f"{str(token.line)}   {str(token.column)}    {catnames[token.category]}   {str(token.lexeme)}")
 
@@ -487,11 +488,12 @@ def program():
     consume(EOF)
 
 def stmt():
-    # <stmt>            -> <simplestmt> NEWLINE
+    # <stmt>            -> <simplestmt> NEWLINE+
     # <stmt>            -> <compoundstmt>
     if token.category in [PRINT, NAME, PYPASS]:
         simplestmt()
-        consume(NEWLINE)
+        while token.category == NEWLINE:
+            consume(NEWLINE)
     elif token.category in [PYIF, PYWHILE]:
         compoundstmt()
     else:
