@@ -693,7 +693,7 @@ def factor():
         operandstack.append(symboltable[token.lexeme])
         advance()
     elif token.category == UNSIGNEDNUM:
-        operandstack.append(int(token.lexeme))
+        operandstack.append(float(token.lexeme))
         advance()
     elif token.category == STRING:
         operandstack.append(token.lexeme)
