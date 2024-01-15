@@ -8,7 +8,7 @@ class Token:
         self.lexeme = lexeme
 
 # Global Variables
-trace = False        # Controls token trace
+trace = True        # Controls token trace
 source = ''         # receives entire source program
 sourceindex = 0     # index into source
 line = 0            # current line number
@@ -401,7 +401,7 @@ def tokenizer():
         
         tokenlist.append(token)
         
-        trace()
+        trace_print()
 
         if token.category == EOF:
             if trace is True:
@@ -409,7 +409,7 @@ def tokenizer():
                 print(indentstack)
             break
 
-def trace():
+def trace_print():
     if trace is True:
         print(f"{str(token.line)}   {str(token.column)}    {catnames[token.category]}   {str(token.lexeme)}")
 
@@ -602,6 +602,7 @@ def ifstmt():
         codeblock()
     else:
         # Skip over until all pairs of INDENT-DEDENT are passed
+        # codeblock() runs pass the indent-dedent block, but if we choose not to execute codeblock(), we need to implement this functionality by our own
         indent_tracker = 0
         indent_start = False
         while True:
@@ -613,11 +614,33 @@ def ifstmt():
             if indent_tracker == 0 and indent_start is True:
                 # We got all those indent-dedent pairs
                 # Next token should be a statement or something close
+                # Don't forget to advance() from the DEDENT
+                advance()
                 break
+            advance()
     if token.category == PYELSE:
         advance()
         consume(COLON)
-        codeblock()
+        # if condition is True, we need to skip this part as ELSE won't be executed
+        if condition is False:
+            codeblock()
+        else:
+            # codeblock() runs pass the indent-dedent block, but if we choose not to execute codeblock(), we need to implement this functionality by our own
+            indent_tracker = 0
+            indent_start = False
+            while True:
+                if token.category == INDENT:
+                    indent_tracker += 1
+                    indent_start = True
+                elif token.category == DEDENT:
+                    indent_tracker -= 1
+                if indent_tracker == 0 and indent_start is True:
+                    # We got all those indent-dedent pairs
+                    # Next token should be a statement or something close
+                    # Don't forget to advance() from the DEDENT
+                    advance()
+                    break
+                advance()
 
 def whilestmt():
     # <whilestmt>       -> 'while' <relexpr> ':' <codeblock>
@@ -660,7 +683,7 @@ def relexpr():
             operandstack.append(left >= right)
         elif token_op.category == GREATERTHAN:
             operandstack.append(left > right)
-            
+
 def expr():
     # <expr>            -> <term> ('+' <term>)*
     # <expr>            -> <term> ('-' <term>)*
