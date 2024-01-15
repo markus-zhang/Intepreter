@@ -591,8 +591,29 @@ def ifstmt():
     # <ifstmt>          -> 'if' <relexpr> ':' <codeblock> ['else' ':' <codeblock>]
     consume(PYIF)
     relexpr()
+    condition = operandstack.pop()
     consume(COLON)
-    codeblock()
+    """
+    if condition is True then execute codeblock()
+    But what to do if condition is False?
+    We should track INDENT - DEDENT pairs
+    """
+    if condition is True:
+        codeblock()
+    else:
+        # Skip over until all pairs of INDENT-DEDENT are passed
+        indent_tracker = 0
+        indent_start = False
+        while True:
+            if token.category == INDENT:
+                indent_tracker += 1
+                indent_start = True
+            elif token.category == DEDENT:
+                indent_tracker -= 1
+            if indent_tracker == 0 and indent_start is True:
+                # We got all those indent-dedent pairs
+                # Next token should be a statement or something close
+                break
     if token.category == PYELSE:
         advance()
         consume(COLON)
@@ -617,9 +638,29 @@ def relexpr():
     # <relexpr>         -> <expr> [ ('<' | '<=' | '==' | '!=' | '>=' | '>') <expr>]
     expr()
     if token.category in [LESSTHAN, LESSEQUAL, EQUAL, NOTEQUAL, GREATEREQUAL, GREATERTHAN]:
+        # Only pop when there is a comparison operator following left side
+        # Consider this:
+        # a = 2
+        # If we pop immediately after the previous expr(), without checking whether there is a comparison operator after a, then a would be popped in relexpr(), while in assignmentstat() we will have to pop() again, which causes error
+        left = operandstack.pop()
+        # Save operator token
+        token_op = token
         advance()
         expr()
-
+        right = operandstack.pop()
+        if token_op.category == LESSTHAN:
+            operandstack.append(left < right)
+        elif token_op.category == LESSEQUAL:
+            operandstack.append(left <= right)
+        elif token_op.category == EQUAL:
+            operandstack.append(left == right)
+        elif token_op.category == NOTEQUAL:
+            operandstack.append(left != right)
+        elif token_op.category == GREATEREQUAL:
+            operandstack.append(left >= right)
+        elif token_op.category == GREATERTHAN:
+            operandstack.append(left > right)
+            
 def expr():
     # <expr>            -> <term> ('+' <term>)*
     # <expr>            -> <term> ('-' <term>)*
