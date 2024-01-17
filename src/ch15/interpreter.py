@@ -651,6 +651,18 @@ def whilestmt():
 
 def codeblock():
     # <codeblock>       -> <NEWLINE> 'INDENT' <stmt>+ 'DEDENT'
+    """
+    Each codeblock() takes care of its own DEDENT. This is super important. Consider the following code:
+
+    a = 2
+    if a < 2:
+        if a >= 1:
+            print(3)
+        else:
+            print(2)
+    
+    We should expect two DEDENTs at the end before EOF. If neither of the codeblocks consumes the DEDENT, then the nested "if" branch (becuase a = 2 >= 1 so it gets executed instead of the "else") would have to skip both DEDENTs. However, this "if" has no idea how deep it itself is buried in -- how does it know how many DEDENTs to skip, unless we track the DEDENTs manually? This is too much work comparing to just asking the codeblocks to take care of their own INDENT-DEDENT pairs
+    """
     consume(NEWLINE)
     consume(INDENT)
     while token.category in [PRINT, NAME, PYPASS, PYIF, PYWHILE]:
