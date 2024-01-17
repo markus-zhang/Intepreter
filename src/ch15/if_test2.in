@@ -1,0 +1,12 @@
+name = 'Markus Zhang'
+age = 42
+if age <= 20:
+    print(name, ' is a kid')
+    if age <= 40:
+        print(name, 'is young')
+        if age <= 60:
+            print(name, 'is of middle age')
+            if age <= 80:
+                print(name, 'is old')
+            else:
+                print(name, 'half God!')

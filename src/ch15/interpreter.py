@@ -8,7 +8,7 @@ class Token:
         self.lexeme = lexeme
 
 # Global Variables
-trace = True        # Controls token trace
+trace = False        # Controls token trace
 source = ''         # receives entire source program
 sourceindex = 0     # index into source
 line = 0            # current line number
