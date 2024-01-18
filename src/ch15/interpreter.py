@@ -8,7 +8,7 @@ class Token:
         self.lexeme = lexeme
 
 # Global Variables
-trace = False        # Controls token trace
+trace = True        # Controls token trace
 source = ''         # receives entire source program
 sourceindex = 0     # index into source
 line = 0            # current line number
@@ -645,10 +645,48 @@ def ifstmt():
 
 def whilestmt():
     # <whilestmt>       -> 'while' <relexpr> ':' <codeblock>
+    """
+    Consider the following code:
+
+    i = 0
+    while i < 10:
+        print(i)
+        i += 1
+    
+    It's easy: we check the <relexpr> for each loop and if the top of the stack is a False then we can skip everything else, as we did in the if statement
+    """
     consume(PYWHILE)
-    relexpr()
-    consume(COLON)
-    codeblock()
+    # Record the position of the first token after "while" so that we can jump back
+    global tokenindex
+    relexpr_pos = tokenindex
+    while True:
+        relexpr()
+        condition = operandstack.pop()
+        consume(COLON)
+        if condition is True:
+            codeblock()
+            tokenindex = relexpr_pos
+            # Manually move the token
+            global token
+            token = tokenlist[tokenindex]
+        else:
+            # as in if, we need to skip the indent-dedent block
+            indent_tracker = 0
+            indent_start = False
+            while True:
+                if token.category == INDENT:
+                    indent_tracker += 1
+                    indent_start = True
+                elif token.category == DEDENT:
+                    indent_tracker -= 1
+                if indent_tracker == 0 and indent_start is True:
+                    # We got all those indent-dedent pairs
+                    # Next token should be a statement or something close
+                    # Don't forget to advance() from the DEDENT
+                    advance()
+                    # return instead of break as we are inside of double while loop
+                    return
+                advance()
 
 def codeblock():
     # <codeblock>       -> <NEWLINE> 'INDENT' <stmt>+ 'DEDENT'
