@@ -520,7 +520,7 @@ def printstmt():
     if token.category != RIGHTPAREN:
         # Must have a <relexpr>
         relexpr()
-        print(operandstack.pop())
+        print(operandstack.pop(), end=' ')
         # Is there a comma?
         while token.category == COMMA:
             advance()
@@ -530,8 +530,9 @@ def printstmt():
             else:
                 # Should be another relexpr
                 relexpr()
-                print(operandstack.pop())
+                print(operandstack.pop(), end=' ')
     consume(RIGHTPAREN)
+    print()
     """
     if token.category == RIGHTPAREN:
         # Case 0: print()
