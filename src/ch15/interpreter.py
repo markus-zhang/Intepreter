@@ -26,6 +26,7 @@ indentstack = [1]
 indentloop = []
 flagloop = False
 flagbreak = False
+flagbreakloop = False
 
 # Category constants
 EOF                 = 0
@@ -732,6 +733,9 @@ def whilestmt():
                 # Since we only allow break in while loop, this should be the caller function that should reset flagbreak
                 # TODO: Logic above is wrong, we need to figure out how to set flagbreak to False at the proper level. The fllowing is WRONG.
                 # flagbreak = False
+                # To flag that I just break out from the correct while loop, my caller should set both flags to false
+                global flagbreakloop
+                flagbreakloop = True
                 return
             else:
                 tokenindex = relexpr_pos
@@ -778,9 +782,15 @@ def codeblock():
     while token.category in [PRINT, NAME, PYPASS, PYIF, PYWHILE, BREAK]:
         stmt()
         """
-        In case codeblock() encounters a "break", the "break" statement should be able to figure out the next token to execute. We should immediately return from whilestmt (and its children statements)
+        In case codeblock() encounters a "flagbreak" signal, this means we are breaking out. If the other signal "flagbreakloop" is also True, this means we are already out of the while loop we want to break out, so we should reset the two flags.
+
+        Why do we need the second flag "flagbreakloop"? If we don't have it, we will have no way to know whether we have broken out of the correct while loop, so we don't know where to reset flagbreak properly. Consider a very nested if-codeblock inside of a while loop, we need to skip the consume(DEDENT) command arbitrarily times - only by setting a second flag do we know when we should we skip it or not.
         """
+        global flagbreak, flagbreakloop
         if flagbreak is True:
+            if flagbreakloop is True:
+                flagbreak = False
+                flagbreakloop = False
             return
     consume(DEDENT)
 
