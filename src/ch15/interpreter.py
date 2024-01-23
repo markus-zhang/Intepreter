@@ -518,8 +518,10 @@ def simplestmt():
         assignmentstmt()
     elif token.category == PYPASS:
         passstmt()
+    elif token.category == BREAK:
+        breakstmt()
     else:
-        raise RuntimeError("Expecting PRINT or NAME") 
+        raise RuntimeError("Expecting PRINT, NAME, PYPASS or BREAK") 
     
 def printstmt():
     # <printstmt>       -> 'print' '(' [ <relexpr> (',' <relexpr>)* [ ',' ]] ')'
@@ -600,7 +602,8 @@ def breakstmt():
         return
     while True:
         advance()
-        if token.column == indentloop[-1]:
+        # DEDENT sometimes occupy the first column so need to rule it out
+        if token.column == indentloop[-1] and token.category not in [DEDENT, INDENT]:
             if token.category == EOF:
                 # Edge case when there is no need to return to caller stmt()
                 exit(0)
@@ -631,6 +634,11 @@ def ifstmt():
     """
     if condition is True:
         codeblock()
+        """
+        In case codeblock() encounters a "break", the "break" statement should be able to figure out the next token to execute. We should immediately return from whilestmt (and its children statements)
+        """
+        if flagbreak is True:
+            return
     else:
         # Skip over until all pairs of INDENT-DEDENT are passed
         # codeblock() runs pass the indent-dedent block, but if we choose not to execute codeblock(), we need to implement this functionality by our own
@@ -704,7 +712,10 @@ def whilestmt():
             """
             In case codeblock() encounters a "break", the "break" statement should be able to figure out the next token to execute. We should immediately return from whilestmt (and its children statements)
             """
+            global flagbreak
             if flagbreak is True:
+                # Since we only allow break in while loop, this should be the caller function that should reset flagbreak
+                flagbreak = False
                 return
             else:
                 tokenindex = relexpr_pos
@@ -748,8 +759,13 @@ def codeblock():
     """
     consume(NEWLINE)
     consume(INDENT)
-    while token.category in [PRINT, NAME, PYPASS, PYIF, PYWHILE]:
+    while token.category in [PRINT, NAME, PYPASS, PYIF, PYWHILE, BREAK]:
         stmt()
+        """
+        In case codeblock() encounters a "break", the "break" statement should be able to figure out the next token to execute. We should immediately return from whilestmt (and its children statements)
+        """
+        if flagbreak is True:
+            return
     consume(DEDENT)
 
 def relexpr():
