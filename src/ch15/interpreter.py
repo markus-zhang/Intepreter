@@ -599,11 +599,26 @@ def breakstmt():
     4) TODO: Add "breakout" check in stmt()
     """
     if len(indentloop) == 0:
-        return
+        # Only allow in loop
+        raise RuntimeError("Only allow break in a loop")
+        # return
     while True:
         advance()
-        # DEDENT sometimes occupy the first column so need to rule it out
-        if token.column == indentloop[-1] and token.category not in [DEDENT, INDENT]:
+        # DEDENT/INDENT sometimes occupy the first column so need to rule it out
+        # Also, we might not see token.column == indentloop[-1] if the while loop we break out is NOT the only loop, consider the following: when we break out of the inner loop, the "else" has a column value of 5, which is smaller than the column value of the "while" (9) we just break out from.
+        """
+        while a < 10:
+            print(a)
+            if a == 5:
+                while a < 50:
+                    a = a + 10
+                    print(a)
+                    if a >= 30:
+                        break
+            else:
+                a = a + 1
+        """
+        if token.column <= indentloop[-1] and token.category not in [DEDENT, INDENT]:
             if token.category == EOF:
                 # Edge case when there is no need to return to caller stmt()
                 exit(0)
@@ -715,7 +730,8 @@ def whilestmt():
             global flagbreak
             if flagbreak is True:
                 # Since we only allow break in while loop, this should be the caller function that should reset flagbreak
-                flagbreak = False
+                # TODO: Logic above is wrong, we need to figure out how to set flagbreak to False at the proper level. The fllowing is WRONG.
+                # flagbreak = False
                 return
             else:
                 tokenindex = relexpr_pos
