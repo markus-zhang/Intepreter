@@ -22,6 +22,10 @@ operandstack = []   # Use a list for the stack
 # For indentation and dedentation
 # Setup as column 1
 indentstack = [1]
+# For tracking parent loop indentations so that we can break out of it
+indentloop = []
+flagloop = False
+flagbreak = False
 
 # Category constants
 EOF                 = 0
@@ -56,6 +60,7 @@ COLON               = 28
 INDENT              = 29
 DEDENT              = 30
 PYELSE              = 31
+BREAK               = 32
 ERROR               = 255   # if none of above, then error
 
 # Displayable names for each token category, using dictionary
@@ -92,6 +97,7 @@ catnames = {
     29: 'INDENTATION',
     30: 'DEDENTATION',
     31: 'PYELSE',
+    32: 'BREAK',
     255:'ERROR'
 }
 
@@ -104,7 +110,8 @@ keywords = {
     'while':    PYWHILE,
     'True':     PYTRUE,
     'False':    PYFALSE,
-    'None':     PYNONE
+    'None':     PYNONE,
+    'break':    BREAK
 }
 
 # One-character tokens and their token categories
@@ -124,7 +131,7 @@ smalltokens = {
     '':     EOF
 }
 
-stmttokens = [PYIF, PYWHILE, PRINT, PYPASS, NAME]
+stmttokens = [PYIF, PYWHILE, PRINT, PYPASS, NAME, BREAK]
 
 # getchar() gets next char from source and adjusts line and column
 def getchar():
@@ -436,6 +443,7 @@ def removecomment():
 # <simplestmt>      -> <printstmt>
 # <simplestmt>      -> <assignmentstmt>
 # <simplestmt>      -> <passstmt>
+# <simplestmt>      -> <breakstmt>
 # <compoundstmt>    -> <whilestmt>
 # <compoundstmt>    -> <ifstmt>
 """
@@ -448,6 +456,7 @@ print(abc, dr, fe,) # Last comma should be accepted but ignored
 # <printstmt>       -> 'print' '(' [ <relexpr> (',' <relexpr>)* [ ',' ]] ')'
 # <assignmentstmt>  -> NAME '=' <relexpr>
 # <passstmt>        -> 'pass'
+# <breakstmt>       -> 'break'
 # <whilestmt>       -> 'while' <relexpr> ':' <codeblock>
 # <ifstmt>          -> 'if' <relexpr> ':' <codeblock> ['else' ':' <codeblock>]
 """
@@ -490,7 +499,7 @@ def program():
 def stmt():
     # <stmt>            -> <simplestmt> NEWLINE+
     # <stmt>            -> <compoundstmt>
-    if token.category in [PRINT, NAME, PYPASS]:
+    if token.category in [PRINT, NAME, PYPASS, BREAK]:
         simplestmt()
         while token.category == NEWLINE:
             consume(NEWLINE)
@@ -580,6 +589,27 @@ def assignmentstmt():
 def passstmt():
     advance()
 
+def breakstmt():
+    """
+    1) if not in a loop, do nothing (check loopindex);
+    2) if in a loop, just skip everything in the path until the column of the token matches loopindex[-1], which means we are getting out of the most inner loop. Don't forget to do loopindex.pop(). 
+    3) Don't forget to signal "breakout" to caller which should be stmt()
+    4) TODO: Add "breakout" check in stmt()
+    """
+    if len(indentloop) == 0:
+        return
+    while True:
+        advance()
+        if token.column == indentloop[-1]:
+            if token.category == EOF:
+                # Edge case when there is no need to return to caller stmt()
+                exit(0)
+            indentloop.pop()
+            global flagbreak
+            flagbreak = True
+            break
+
+
 def compoundstmt():
     # <compoundstmt>    -> <whilestmt>
     # <compoundstmt>    -> <ifstmt>
@@ -655,6 +685,12 @@ def whilestmt():
     
     It's easy: we check the <relexpr> for each loop and if the top of the stack is a False then we can skip everything else, as we did in the if statement
     """
+    # Push indent of each while loop so that a "break" can get us out of it
+    # Don't forget to manually pop once the loop is done, or "break" gets us out of it
+    global indentloop, token
+    indentloop.append(token.column)
+    print(f"Loop: {indentloop}")
+
     consume(PYWHILE)
     # Record the position of the first token after "while" so that we can jump back
     global tokenindex
@@ -665,10 +701,16 @@ def whilestmt():
         consume(COLON)
         if condition is True:
             codeblock()
-            tokenindex = relexpr_pos
-            # Manually move the token
-            global token
-            token = tokenlist[tokenindex]
+            """
+            In case codeblock() encounters a "break", the "break" statement should be able to figure out the next token to execute. We should immediately return from whilestmt (and its children statements)
+            """
+            if flagbreak is True:
+                return
+            else:
+                tokenindex = relexpr_pos
+                # Manually move the token
+                # global token
+                token = tokenlist[tokenindex]
         else:
             # as in if, we need to skip the indent-dedent block
             indent_tracker = 0
@@ -685,6 +727,8 @@ def whilestmt():
                     # Don't forget to advance() from the DEDENT
                     advance()
                     # return instead of break as we are inside of double while loop
+                    # Don't forget to pop the indentloop stack as no "break" is run
+                    indentloop.pop()
                     return
                 advance()
 
