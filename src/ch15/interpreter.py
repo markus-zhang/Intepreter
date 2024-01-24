@@ -430,9 +430,29 @@ def removecomment():
     """Remove all comments from token list
     """
     global tokenlist
-    for token in tokenlist:
-        if token.category == COMMENT_MULTIPLE or token.category == COMMENT_SINGLE:
-            tokenlist.remove(token)
+    index = 0
+    while index < len(tokenlist):
+        if tokenlist[index].category in [COMMENT_MULTIPLE, COMMENT_SINGLE]:
+            tokenlist.pop(index)
+            # If the next token is a NEWLINE, should also remove it. Imagine this piece of code snippet:
+            """
+            while count < number:
+                # Nested while loop
+                while flag == 'yes':
+            
+            The token stream after the first colon looks like this:
+            <NEWLINE> <INDENT> <COMMENT_SINGLE> <NEWLINE> <IFWHILE> ...
+            So if we remove the comment, it looks like:
+            <NEWLINE> <INDENT> <NEWLINE> <IFWHILE> ...
+
+            Now this is inside a codeblock, which correctly consumes the first <NEWLINE>, the <INDENT> following, but then checking whether the next token is in [PRINT, NAME, PYPASS, PYIF, PYWHILE, BREAK], and if not it goes forward to consume <DEDENT>.
+
+            This is going to raise a RuntimeError in our case as our next token is <NEWLINE>
+            """
+            while tokenlist[index].category == NEWLINE:
+                tokenlist.pop(index)
+        index += 1
+
 
 # Parser code
 # Note that parser should be called after tokenizer
@@ -600,7 +620,6 @@ def breakstmt():
     1) if not in a loop, do nothing (check loopindex);
     2) if in a loop, just skip everything in the path until the column of the token matches loopindex[-1], which means we are getting out of the most inner loop. Don't forget to do loopindex.pop(). 
     3) Don't forget to signal "breakout" to caller which should be stmt()
-    4) TODO: Add "breakout" check in stmt()
     """
     if len(indentloop) == 0:
         # Only allow in loop
