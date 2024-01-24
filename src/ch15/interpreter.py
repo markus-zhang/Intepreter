@@ -799,7 +799,10 @@ def codeblock():
     
     We should expect two DEDENTs at the end before EOF. If neither of the codeblocks consumes the DEDENT, then the nested "if" branch (becuase a = 2 >= 1 so it gets executed instead of the "else") would have to skip both DEDENTs. However, this "if" has no idea how deep it itself is buried in -- how does it know how many DEDENTs to skip, unless we track the DEDENTs manually? This is too much work comparing to just asking the codeblocks to take care of their own INDENT-DEDENT pairs
     """
-    consume(NEWLINE)
+    # In general there is exactly one <NEWLINE> to be consumes
+    # However there are cases with multiple <NEWLINE>s and 0 <NEWLINE> -- the second case results from comments and their following <NEWLINE>s been removed from the token list
+    while token.category == NEWLINE:
+        consume(NEWLINE)
     consume(INDENT)
     while token.category in [PRINT, NAME, PYPASS, PYIF, PYWHILE, BREAK]:
         stmt()

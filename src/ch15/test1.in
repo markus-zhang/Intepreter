@@ -5,7 +5,7 @@ flag = 'yes'
 message = 'looping'
 
 # Main while loop
-while count < number:
+while count < number: # comment
     # Nested while loop
     while flag == 'yes':
         if count < number / 2:
