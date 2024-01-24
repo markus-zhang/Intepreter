@@ -493,6 +493,9 @@ while a < b:
 ###############################################################
 def program():
     # <program>         -> <stmt>* EOF
+    # We must skip leading newlines, otherwise the while loop does not do anything and the next expecting token is EOF, which is not we want usually.
+    while token.category == NEWLINE:
+        advance()
     while token.category in stmttokens:
         stmt()
     consume(EOF)
