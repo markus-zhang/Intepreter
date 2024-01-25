@@ -970,7 +970,8 @@ def parser():
     token = tokenlist[0]
     tokenindex = 0
     program()
-    print("End of parsing")
+    if trace is True:
+        print("End of parsing")
 
 
 # main() reads input file and calls tokenizer

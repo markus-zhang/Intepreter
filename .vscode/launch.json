@@ -12,7 +12,7 @@
             "console": "integratedTerminal",
             "stopOnEntry": true,
             "justMyCode": false,
-            "args": ["C:/Dev/Projects/Intepreter/src/ch15/test2.in"]
+            "args": ["C:/Dev/Projects/Intepreter/src/ch15/test3.in"]
         }
     ]
 }

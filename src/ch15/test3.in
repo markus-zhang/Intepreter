@@ -1,0 +1,14 @@
+# Initializing the first two Fibonacci numbers and the counter
+a = 0
+b = 1
+counter = 0
+
+# Looping until the 50th Fibonacci number is reached
+while counter < 49:  # Since we already have the first two numbers, we loop 49 times
+    temp = a + b
+    a = b
+    b = temp
+    counter = counter + 1
+
+# a now holds the 50th Fibonacci number
+print('The 50th Fibonacci number is:', a)
