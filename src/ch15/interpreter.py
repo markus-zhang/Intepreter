@@ -8,7 +8,7 @@ class Token:
         self.lexeme = lexeme
 
 # Global Variables
-trace = True        # Controls token trace
+trace = False        # Controls token trace
 source = ''         # receives entire source program
 sourceindex = 0     # index into source
 line = 0            # current line number
@@ -735,7 +735,8 @@ def whilestmt():
     # Don't forget to manually pop once the loop is done, or "break" gets us out of it
     global indentloop, token
     indentloop.append(token.column)
-    print(f"Loop: {indentloop}")
+    if trace is True:
+        print(f"Loop: {indentloop}")
 
     consume(PYWHILE)
     # Record the position of the first token after "while" so that we can jump back
@@ -924,7 +925,6 @@ def factor():
     elif token.category == STRING:
         operandstack.append(token.lexeme)
         advance()
-    # TODO: For the next 3 elifs, change the appended value to maybe their Python ones? For example, instead of pushing 'True' as a string, push True as a value?
     elif token.category == PYTRUE:
         operandstack.append(True)
         advance()
