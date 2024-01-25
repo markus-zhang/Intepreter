@@ -813,11 +813,17 @@ def codeblock():
         Why do we need the second flag "flagbreakloop"? If we don't have it, we will have no way to know whether we have broken out of the correct while loop, so we don't know where to reset flagbreak properly. Consider a very nested if-codeblock inside of a while loop, we need to skip the consume(DEDENT) command arbitrarily times - only by setting a second flag do we know when we should we skip it or not.
         """
         global flagbreak, flagbreakloop
+        """
+        NOTE: This is super important. The following code says, ONLY return if flagbreak is TRUE and flagbreakloop is False, why? Consider the scenario (See test4.in): 
+        1) When we are in the MIDDLE of the return "chain" triggered by a break, we need to return from codeblock(), why? Because we want to find the top loop that pairs with the break statement
+        2) When we are already out of the return "chain", and if we still have more statements in the parent codeblock that contains the loop that we just broke out, we do NOT want to return, because there are other statements to be executed after the loop
+        """
         if flagbreak is True:
             if flagbreakloop is True:
                 flagbreak = False
                 flagbreakloop = False
-            return
+            else:
+                return
     consume(DEDENT)
 
 def relexpr():

@@ -1,0 +1,27 @@
+# Initialize variables
+outer = 0
+middle = 0
+inner = 0
+
+# Outer loop
+while outer < 5:
+    print('In outer loop, iteration: ', outer)
+    middle = 0
+
+    # Middle loop
+    while middle < 3:
+        print('  In middle loop, iteration: ', middle)
+        inner = 0
+
+        # Inner loop
+        while inner < 4:
+            print('    In inner loop, iteration: ', inner)
+            if inner == 2:  # Condition to break the inner loop
+                print('    Breaking inner loop')
+                break
+
+            inner = inner + 1  # Increment inner without using +=
+        middle = middle + 1  # Increment middle without using +=
+
+    outer = outer + 1  # Increment outer without using +=
+    print('End of outer loop iteration: ', outer)
