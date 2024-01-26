@@ -62,6 +62,10 @@ INDENT              = 29
 DEDENT              = 30
 PYELSE              = 31
 BREAK               = 32
+ADDASSIGN           = 33
+SUBASSIGN           = 34
+MULASSIGN           = 35
+DIVASSIGN           = 36
 ERROR               = 255   # if none of above, then error
 
 # Displayable names for each token category, using dictionary
@@ -99,6 +103,10 @@ catnames = {
     30: 'DEDENTATION',
     31: 'PYELSE',
     32: 'BREAK',
+    33: 'ADDASSIGN',
+    34: 'SUBASSIGN',
+    35: 'MULASSIGN',
+    36: 'DIVASSIGN',
     255:'ERROR'
 }
 
@@ -129,6 +137,10 @@ smalltokens = {
     '\n':   NEWLINE,
     ':':    COLON,
     ',':    COMMA,
+    '+=':   ADDASSIGN,
+    '-=':   SUBASSIGN,
+    '*=':   MULASSIGN,
+    '/=':   DIVASSIGN,
     '':     EOF
 }
 
@@ -253,6 +265,31 @@ def tokenizer():
                 token.category = EQUAL
                 token.lexeme += curchar
                 curchar = getchar()
+
+        # Compound assignment such as += and /=
+        elif curchar in ['+', '-', '*', '/']:
+            token.lexeme += curchar
+            nextchar = peekchar()
+            if nextchar != '=':
+                # Just a simple arithmetic operator
+                token.category = smalltokens[curchar]
+                curchar = getchar()
+            else:
+                # Should be a compound assignment operator
+                compound_type = curchar
+                curchar = getchar()
+                if compound_type == '+':
+                    token.category = ADDASSIGN
+                elif compound_type == '-':
+                    token.category = SUBASSIGN
+                elif compound_type == '*':
+                    token.category = MULASSIGN
+                elif compound_type == '/':
+                    token.category = DIVASSIGN
+                
+                token.lexeme += curchar
+                curchar = getchar()
+
 
         # LESSTHAN (<) and LESSEQUAL (<=)
         elif curchar == '<':
