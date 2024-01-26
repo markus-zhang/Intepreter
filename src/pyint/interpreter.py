@@ -1,4 +1,5 @@
 import sys
+import os
 
 class Token:
     def __init__(self, line, column, category, lexeme) -> None:
@@ -8,9 +9,13 @@ class Token:
         self.lexeme = lexeme
 
 # Global Variables
+# Section 1: Debugging and logging
 trace = True            # Controls token trace
 only_tokenizer = True   # If True, exit to OS after tokenizer
 dump_tokenizer = True   # Should we dump the trace from the tokenizer into a local file?
+token_dump_file = 'C:/Dev/Projects/Intepreter/src/pyint/token.dump'
+
+# Section 2: Everything else
 source = ''             # receives entire source program
 sourceindex = 0         # index into source
 line = 0                # current line number
@@ -462,8 +467,25 @@ def trace_print():
 
 def traceall():
     if trace is True:
+        """
+        Remove the existing file even if we don't need to dump
+        """
+        try:
+            os.remove(token_dump_file)
+        except OSError:
+            pass
         for token in tokenlist:
-            print(f"{str(token.line)}   {str(token.column)}    {catnames[token.category]}   {str(token.lexeme)}")
+            if dump_tokenizer is False:
+                print(f"{str(token.line)}   {str(token.column)}    {catnames[token.category]}   {str(token.lexeme)}")
+            else:
+                """
+                Then dump the content
+                """
+                try:
+                    with open(token_dump_file, 'a') as file:
+                        print(f"{str(token.line)}   {str(token.column)}    {catnames[token.category]}   {str(token.lexeme)}", file=file)
+                except Exception as e:
+                    raise RuntimeError(e)
 
 def removecomment():
     """Remove all comments from token list
