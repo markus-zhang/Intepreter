@@ -1,0 +1,33 @@
+# Sample Python program for tokenizer testing
+
+# Using compound assignment operators
+a = 10
+b = 5
+
+a += b  # Addition assignment
+print('a += b:', a)
+
+a -= b  # Subtraction assignment
+print('a -= b:', a)
+
+a *= b  # Multiplication assignment
+print('a *= b:', a)
+
+a /= b  # Division assignment
+print('a /= b:', a)
+
+# Using single operators separated by spaces
+x = 20
+y = 10
+
+x = x / y  # Division with single operators and space
+print('x = x / y:', x)
+
+x = x * y  # Multiplication with single operators and space
+print('x = x * y:', x)
+
+x = x - y  # Subtraction with single operators and space
+print('x = x - y:', x)
+
+x = x + y  # Addition with single operators and space
+print('x = x + y:', x)

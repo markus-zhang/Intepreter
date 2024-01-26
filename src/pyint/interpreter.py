@@ -8,21 +8,23 @@ class Token:
         self.lexeme = lexeme
 
 # Global Variables
-trace = False        # Controls token trace
-source = ''         # receives entire source program
-sourceindex = 0     # index into source
-line = 0            # current line number
-column = 0          # current column number
-tokenlist = []      # list of tokens to be consumed by parser
+trace = True            # Controls token trace
+only_tokenizer = True   # If True, exit to OS after tokenizer
+dump_tokenizer = True   # Should we dump the trace from the tokenizer into a local file?
+source = ''             # receives entire source program
+sourceindex = 0         # index into source
+line = 0                # current line number
+column = 0              # current column number
+tokenlist = []          # list of tokens to be consumed by parser
 tokenindex = 0
-prevchar = '\n'     # '\n' in prevchar signals start of new line
-blankline = True    # Set to False if line is not blank
-symboltable = {}    # Symbol Table for the interpreter
-operandstack = []   # Use a list for the stack
+prevchar = '\n'         # '\n' in prevchar signals start of new line
+blankline = True        # Set to False if line is not blank
+symboltable = {}        # Symbol Table for the interpreter
+operandstack = []       # Use a list for the stack
 # For indentation and dedentation
 # Setup as column 1
 indentstack = [1]
-# For tracking parent loop indentations so that we can break out of it
+# For tracking parent loop indentations so that we can break out of it, see breakstat() and codeblock() for why
 indentloop = []
 flagloop = False
 flagbreak = False
@@ -1044,6 +1046,8 @@ def main():
 
     try:
         tokenizer()
+        if only_tokenizer == True:
+            exit()
         removecomment()
         parser()
     except RuntimeError as emsg:
