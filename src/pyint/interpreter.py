@@ -10,9 +10,9 @@ class Token:
 
 # Global Variables
 # Section 1: Debugging and logging
-trace = True            # Controls token trace
-only_tokenizer = True   # If True, exit to OS after tokenizer
-dump_tokenizer = True   # Should we dump the trace from the tokenizer into a local file?
+trace = False           # Controls token trace
+only_tokenizer = False  # If True, exit to OS after tokenizer
+dump_tokenizer = False  # Should we dump the trace from the tokenizer into a local file?
 token_dump_file = 'C:/Dev/Projects/Intepreter/src/pyint/token.dump'
 
 # Section 2: Everything else
@@ -512,7 +512,8 @@ def removecomment():
             """
             while tokenlist[index].category == NEWLINE:
                 tokenlist.pop(index)
-        index += 1
+        else:
+            index += 1
 
 
 # Parser code
@@ -537,6 +538,10 @@ print(abc, dr, fe,) # Last comma should be accepted but ignored
 """
 # <printstmt>       -> 'print' '(' [ <relexpr> (',' <relexpr>)* [ ',' ]] ')'
 # <assignmentstmt>  -> NAME '=' <relexpr>
+# <assignmentstmt>  -> NAME '+=' <relexpr>
+# <assignmentstmt>  -> NAME '-=' <relexpr>
+# <assignmentstmt>  -> NAME '*=' <relexpr>
+# <assignmentstmt>  -> NAME '/=' <relexpr>
 # <passstmt>        -> 'pass'
 # <breakstmt>       -> 'break'
 # <whilestmt>       -> 'while' <relexpr> ':' <codeblock>
@@ -663,15 +668,34 @@ def printstmt():
 
 def assignmentstmt():
     # <assignmentstmt>  -> NAME '=' <relexpr>
+    # <assignmentstmt>  -> NAME '+=' <relexpr>
+    # <assignmentstmt>  -> NAME '-=' <relexpr>
+    # <assignmentstmt>  -> NAME '*=' <relexpr>
+    # <assignmentstmt>  -> NAME '/=' <relexpr>
     # We already know the first token must be NAME so no need to check
     # Pick up the token as symbol
     left = token.lexeme
     advance()
-    consume(ASSIGNOP)
-    relexpr()
-    # expr() pushes onto top of the operand stack, update symbol table
-    global symboltable
-    symboltable[left] = operandstack.pop()
+
+    if token.category == ASSIGNOP:
+        consume(ASSIGNOP)
+        relexpr()
+        # expr() pushes onto top of the operand stack, update symbol table
+        # global symboltable
+        symboltable[left] = operandstack.pop()
+    elif token.category in [ADDASSIGN, SUBASSIGN, MULASSIGN, DIVASSIGN]:
+        compound_assign_op = token
+        advance()   # No need to check again
+        relexpr()
+        if compound_assign_op.category == ADDASSIGN:
+            symboltable[left] = symboltable[left] + operandstack.pop()
+        elif compound_assign_op.category == SUBASSIGN:
+            symboltable[left] = symboltable[left] - operandstack.pop()
+        elif compound_assign_op.category == MULASSIGN:
+            symboltable[left] = symboltable[left] * operandstack.pop()
+        elif compound_assign_op.category == DIVASSIGN:
+            symboltable[left] = symboltable[left] / operandstack.pop()
+        
 
 def passstmt():
     advance()
