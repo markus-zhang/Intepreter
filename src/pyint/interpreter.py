@@ -10,9 +10,9 @@ class Token:
 
 # Global Variables
 # Section 1: Debugging and logging
-trace = False           # Controls token trace
-only_tokenizer = False  # If True, exit to OS after tokenizer
-dump_tokenizer = False  # Should we dump the trace from the tokenizer into a local file?
+trace = True           # Controls token trace
+only_tokenizer = True   # If True, exit to OS after tokenizer
+dump_tokenizer = True   # Should we dump the trace from the tokenizer into a local file?
 token_dump_file = 'C:/Dev/Projects/Intepreter/src/pyint/token.dump'
 
 # Section 2: Everything else
@@ -73,6 +73,8 @@ ADDASSIGN           = 33
 SUBASSIGN           = 34
 MULASSIGN           = 35
 DIVASSIGN           = 36
+PYELIF              = 37
+MODULO              = 38
 ERROR               = 255   # if none of above, then error
 
 # Displayable names for each token category, using dictionary
@@ -114,6 +116,8 @@ catnames = {
     34: 'SUBASSIGN',
     35: 'MULASSIGN',
     36: 'DIVASSIGN',
+    37: 'PYELIF',
+    38: 'MODULO',
     255:'ERROR'
 }
 
@@ -122,6 +126,7 @@ keywords = {
     'print':    PRINT,
     'pass':     PYPASS,
     'if':       PYIF,
+    'elif':     PYELIF,
     'else':     PYELSE,
     'while':    PYWHILE,
     'True':     PYTRUE,
@@ -141,6 +146,7 @@ smalltokens = {
     '-':    MINUS,
     '*':    TIMES,
     '/':    DIVISION,
+    '%':    MODULO,
     '\n':   NEWLINE,
     ':':    COLON,
     ',':    COMMA,

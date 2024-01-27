@@ -1,150 +1,134 @@
-1   1    COMMENT_SINGLE   # Sample Python program for tokenizer testing
-1   46    NEWLINE   
+1   1    COMMENT_SINGLE   # Initialize variables
+1   23    NEWLINE   
 
-3   1    COMMENT_SINGLE   # Using compound assignment operators
-3   38    NEWLINE   
+2   1    NAME   counter
+2   9    ASSIGNOP   =
+2   11    UNSIGNEDNUM   0
+2   12    NEWLINE   
 
-4   1    NAME   a
-4   3    ASSIGNOP   =
-4   5    UNSIGNEDNUM   10
-4   7    NEWLINE   
+3   1    NAME   threshold
+3   11    ASSIGNOP   =
+3   13    UNSIGNEDNUM   3
+3   14    NEWLINE   
 
-5   1    NAME   b
-5   3    ASSIGNOP   =
-5   5    UNSIGNEDNUM   5
-5   6    NEWLINE   
+5   1    COMMENT_SINGLE   # Using a while loop
+5   21    NEWLINE   
 
-7   1    NAME   a
-7   3    ADDASSIGN   +=
-7   6    NAME   b
-7   9    COMMENT_SINGLE   # Addition assignment
-7   30    NEWLINE   
+6   1    PYWHILE   while
+6   7    NAME   counter
+6   15    LESSTHAN   <
+6   17    UNSIGNEDNUM   6
+6   18    COLON   :
+6   19    NEWLINE   
 
-8   1    PRINT   print
-8   6    LEFTPAREN   (
-8   7    STRING   a += b:
-8   16    COMMA   ,
-8   18    NAME   a
-8   19    RIGHTPAREN   )
-8   20    NEWLINE   
+7   1    INDENTATION   
+7   5    PRINT   print
+7   10    LEFTPAREN   (
+7   11    STRING   Current number:
+7   28    COMMA   ,
+7   30    NAME   counter
+7   37    RIGHTPAREN   )
+7   38    NEWLINE   
 
-10   1    NAME   a
-10   3    SUBASSIGN   -=
-10   6    NAME   b
-10   9    COMMENT_SINGLE   # Subtraction assignment
-10   33    NEWLINE   
+9   5    COMMENT_SINGLE   # Using if-elif-else to classify the number as even, odd, or zero
+9   70    NEWLINE   
 
-11   1    PRINT   print
-11   6    LEFTPAREN   (
-11   7    STRING   a -= b:
-11   16    COMMA   ,
-11   18    NAME   a
-11   19    RIGHTPAREN   )
-11   20    NEWLINE   
+10   5    PYIF   if
+10   8    NAME   counter
+10   16    EQUAL   ==
+10   19    UNSIGNEDNUM   0
+10   20    COLON   :
+10   21    NEWLINE   
 
-13   1    NAME   a
-13   3    MULASSIGN   *=
-13   6    NAME   b
-13   9    COMMENT_SINGLE   # Multiplication assignment
-13   36    NEWLINE   
+11   1    INDENTATION   
+11   9    PRINT   print
+11   14    LEFTPAREN   (
+11   15    STRING   The number is zero.
+11   36    RIGHTPAREN   )
+11   37    NEWLINE   
 
-14   1    PRINT   print
-14   6    LEFTPAREN   (
-14   7    STRING   a *= b:
-14   16    COMMA   ,
-14   18    NAME   a
-14   19    RIGHTPAREN   )
-14   20    NEWLINE   
+12   1    DEDENTATION   
+12   5    PYELIF   elif
+12   10    NAME   counter
+12   18    MODULO   %
+12   20    UNSIGNEDNUM   2
+12   22    EQUAL   ==
+12   25    UNSIGNEDNUM   0
+12   26    COLON   :
+12   27    NEWLINE   
 
-16   1    NAME   a
-16   3    DIVASSIGN   /=
-16   6    NAME   b
-16   9    COMMENT_SINGLE   # Division assignment
-16   30    NEWLINE   
+13   1    INDENTATION   
+13   9    PRINT   print
+13   14    LEFTPAREN   (
+13   15    STRING   The number is even.
+13   36    RIGHTPAREN   )
+13   37    NEWLINE   
 
-17   1    PRINT   print
-17   6    LEFTPAREN   (
-17   7    STRING   a /= b:
-17   16    COMMA   ,
-17   18    NAME   a
-17   19    RIGHTPAREN   )
-17   20    NEWLINE   
+14   1    DEDENTATION   
+14   5    PYELSE   else
+14   9    COLON   :
+14   10    NEWLINE   
 
-19   1    COMMENT_SINGLE   # Using single operators separated by spaces
-19   45    NEWLINE   
+15   1    INDENTATION   
+15   9    PRINT   print
+15   14    LEFTPAREN   (
+15   15    STRING   The number is odd.
+15   35    RIGHTPAREN   )
+15   36    NEWLINE   
 
-20   1    NAME   x
-20   3    ASSIGNOP   =
-20   5    UNSIGNEDNUM   20
-20   7    NEWLINE   
+17   1    DEDENTATION   
+17   5    COMMENT_SINGLE   # Using if-else to check if the number is greater than the threshold
+17   73    NEWLINE   
 
-21   1    NAME   y
-21   3    ASSIGNOP   =
-21   5    UNSIGNEDNUM   10
-21   7    NEWLINE   
+18   5    PYIF   if
+18   8    NAME   counter
+18   16    GREATERTHAN   >
+18   18    NAME   threshold
+18   27    COLON   :
+18   28    NEWLINE   
 
-23   1    NAME   x
-23   3    ASSIGNOP   =
-23   5    NAME   x
-23   7    DIVISION   /
-23   9    NAME   y
-23   12    COMMENT_SINGLE   # Division with single operators and space
-23   54    NEWLINE   
+19   1    INDENTATION   
+19   9    PRINT   print
+19   14    LEFTPAREN   (
+19   15    STRING   The number is greater than
+19   43    COMMA   ,
+19   45    NAME   threshold
+19   54    RIGHTPAREN   )
+19   55    NEWLINE   
 
-24   1    PRINT   print
-24   6    LEFTPAREN   (
-24   7    STRING   x = x / y:
-24   19    COMMA   ,
-24   21    NAME   x
-24   22    RIGHTPAREN   )
-24   23    NEWLINE   
+20   1    DEDENTATION   
+20   5    PYELSE   else
+20   9    COLON   :
+20   10    NEWLINE   
 
-26   1    NAME   x
-26   3    ASSIGNOP   =
-26   5    NAME   x
-26   7    TIMES   *
-26   9    NAME   y
-26   12    COMMENT_SINGLE   # Multiplication with single operators and space
-26   60    NEWLINE   
+21   1    INDENTATION   
+21   9    PRINT   print
+21   14    LEFTPAREN   (
+21   15    STRING   The number is not greater than
+21   47    COMMA   ,
+21   49    NAME   threshold
+21   58    RIGHTPAREN   )
+21   59    NEWLINE   
+
+23   1    DEDENTATION   
+23   5    COMMENT_SINGLE   # Increment counter
+23   24    NEWLINE   
+
+24   5    NAME   counter
+24   13    ASSIGNOP   =
+24   15    NAME   counter
+24   23    PLUS   +
+24   25    UNSIGNEDNUM   1
+24   26    NEWLINE   
+
+26   1    DEDENTATION   
+26   1    COMMENT_SINGLE   # End of program
+26   17    NEWLINE   
 
 27   1    PRINT   print
 27   6    LEFTPAREN   (
-27   7    STRING   x = x * y:
-27   19    COMMA   ,
-27   21    NAME   x
-27   22    RIGHTPAREN   )
-27   23    NEWLINE   
+27   7    STRING   Program completed.
+27   27    RIGHTPAREN   )
+27   28    NEWLINE   
 
-29   1    NAME   x
-29   3    ASSIGNOP   =
-29   5    NAME   x
-29   7    MINUS   -
-29   9    NAME   y
-29   12    COMMENT_SINGLE   # Subtraction with single operators and space
-29   57    NEWLINE   
-
-30   1    PRINT   print
-30   6    LEFTPAREN   (
-30   7    STRING   x = x - y:
-30   19    COMMA   ,
-30   21    NAME   x
-30   22    RIGHTPAREN   )
-30   23    NEWLINE   
-
-32   1    NAME   x
-32   3    ASSIGNOP   =
-32   5    NAME   x
-32   7    PLUS   +
-32   9    NAME   y
-32   12    COMMENT_SINGLE   # Addition with single operators and space
-32   54    NEWLINE   
-
-33   1    PRINT   print
-33   6    LEFTPAREN   (
-33   7    STRING   x = x + y:
-33   19    COMMA   ,
-33   21    NAME   x
-33   22    RIGHTPAREN   )
-33   23    NEWLINE   
-
-34   1    EOF   
+28   1    EOF   
