@@ -10,7 +10,7 @@ class Token:
 
 # Global Variables
 # Section 1: Debugging and logging
-trace = True           # Controls token trace
+trace = False           # Controls token trace
 only_tokenizer = False   # If True, exit to OS after tokenizer
 dump_tokenizer = True   # Should we dump the trace from the tokenizer into a local file?
 token_dump_file = 'C:/Dev/Projects/Intepreter/src/pyint/token.dump'
