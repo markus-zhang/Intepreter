@@ -11,7 +11,7 @@ class Token:
 # Global Variables
 # Section 1: Debugging and logging
 trace = True           # Controls token trace
-only_tokenizer = True   # If True, exit to OS after tokenizer
+only_tokenizer = False   # If True, exit to OS after tokenizer
 dump_tokenizer = True   # Should we dump the trace from the tokenizer into a local file?
 token_dump_file = 'C:/Dev/Projects/Intepreter/src/pyint/token.dump'
 
@@ -551,7 +551,7 @@ print(abc, dr, fe,) # Last comma should be accepted but ignored
 # <passstmt>        -> 'pass'
 # <breakstmt>       -> 'break'
 # <whilestmt>       -> 'while' <relexpr> ':' <codeblock>
-# <ifstmt>          -> 'if' <relexpr> ':' <codeblock> ['else' ':' <codeblock>]
+# <ifstmt>          -> 'if' <relexpr> ':' <codeblock> ('elif' <relexpr> ':' <codeblock>)* ['else' ':' <codeblock>]
 """
 <codeblock> is not recursive, because it is not neccesarily true that every line in a while/if block needs an indent-dedent:
 - Nested:
@@ -573,6 +573,7 @@ while a < b:
 # <expr>            -> <term> ('-' <term>)*
 # <term>            -> <factor> ('*' <factor>)*
 # <term>            -> <factor> ('/' <factor>)*
+# <term>            -> <factor> ('%' <factor>)*
 # <factor>          -> '+' <factor>
 # <factor>          -> '-' <factor>
 # <factor>          -> NAME
@@ -751,7 +752,7 @@ def compoundstmt():
         whilestmt()
 
 def ifstmt():
-    # <ifstmt>          -> 'if' <relexpr> ':' <codeblock> ['else' ':' <codeblock>]
+    # <ifstmt>          -> 'if' <relexpr> ':' <codeblock> ('elif' <relexpr> ':' <codeblock>)* ['else' ':' <codeblock>]
     consume(PYIF)
     relexpr()
     condition = operandstack.pop()
@@ -786,6 +787,35 @@ def ifstmt():
                 advance()
                 break
             advance()
+    # Now that we skipped the codeblock of "if", we should expect either "else" or "elif", or something else which means that the "if" has no "else" nor "elif". We can also multiple "elif"s so a loop is good for this kind of stuffs (or recursively function call)
+    while token.category == PYELIF:
+        advance()
+        relexpr()
+        condition_elif = operandstack.pop()
+        consume(COLON)
+
+        if condition_elif is True:
+            codeblock()
+            if flagbreak is True:
+                return
+        else:
+            # Skip over until all pairs of INDENT-DEDENT are passed
+            # codeblock() runs pass the indent-dedent block, but if we choose not to execute codeblock(), we need to implement this functionality by our own
+            indent_tracker = 0
+            indent_start = False
+            while True:
+                if token.category == INDENT:
+                    indent_tracker += 1
+                    indent_start = True
+                elif token.category == DEDENT:
+                    indent_tracker -= 1
+                if indent_tracker == 0 and indent_start is True:
+                    # We got all those indent-dedent pairs
+                    # Next token should be a statement or something close
+                    # Don't forget to advance() from the DEDENT
+                    advance()
+                    break
+                advance()
     if token.category == PYELSE:
         advance()
         consume(COLON)
@@ -971,8 +1001,9 @@ def expr():
 def term():
     # <term>            -> <factor> ('*' <factor>)*
     # <term>            -> <factor> ('/' <factor>)*
+    # <term>            -> <factor> ('%' <factor>)*
     factor()
-    while token.category == TIMES or token.category == DIVISION:
+    while token.category in [TIMES, DIVISION, MODULO]:
         # Now the left side was pushed onto the operand stack
         # Note that the left side must be in the loop for multiple operations
         optoken = token
@@ -984,8 +1015,10 @@ def term():
         right = operandstack.pop()
         if optoken.category == TIMES:
             operandstack.append(left * right)
-        else:
+        elif optoken.category == DIVISION:
             operandstack.append(left / right)
+        elif optoken.category == MODULO:
+            operandstack.append(left % right)
 
 def factor():
     # <factor>          -> '+' <factor>
