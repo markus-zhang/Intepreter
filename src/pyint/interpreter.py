@@ -787,14 +787,21 @@ def ifstmt():
                 advance()
                 break
             advance()
-    # Now that we skipped the codeblock of "if", we should expect either "else" or "elif", or something else which means that the "if" has no "else" nor "elif". We can also multiple "elif"s so a loop is good for this kind of stuffs (or recursively function call)
+    # Now that we skipped the codeblock of "if", we should expect either "else" or "elif", or something else which means that the "if" has no "else" nor "elif". We can also have multiple "elif"s so a loop is good for this kind of stuffs (or recursively function call)
+    # Hacky way to tell the "else" block that some "elif" got executed
+    elif_executed = False
     while token.category == PYELIF:
         advance()
         relexpr()
         condition_elif = operandstack.pop()
         consume(COLON)
 
-        if condition_elif is True:
+        # We need to make sure that the if condition is False
+        # Otherwise this will be falsely triggered if the if condition is True and the elif condition is also True
+        # This is rare but still can happen (think counter == 0 and counter % 2 == 0 can be both true)
+        if condition_elif is True and condition is False:
+            if elif_executed is False:
+                elif_executed = True
             codeblock()
             if flagbreak is True:
                 return
@@ -819,8 +826,8 @@ def ifstmt():
     if token.category == PYELSE:
         advance()
         consume(COLON)
-        # if condition is True, we need to skip this part as ELSE won't be executed
-        if condition is False:
+        # if either condition is True, we need to skip this part as ELSE won't be executed
+        if condition is False and elif_executed is False:
             codeblock()
         else:
             # codeblock() runs pass the indent-dedent block, but if we choose not to execute codeblock(), we need to implement this functionality by our own
