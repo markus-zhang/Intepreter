@@ -38,6 +38,8 @@ MULASSIGN           = 35
 DIVASSIGN           = 36
 PYELIF              = 37
 MODULO              = 38
+INTEGER             = 39
+FLOAT               = 40
 ERROR               = 255   # if none of above, then error
 
 # Displayable names for each token category, using dictionary
@@ -81,6 +83,8 @@ catnames = {
     36: 'DIVASSIGN',
     37: 'PYELIF',
     38: 'MODULO',
+    39: 'INTEGER',
+    40: 'FLOAT',
     255:'ERROR'
 }
 
@@ -121,3 +125,31 @@ smalltokens = {
 }
 
 stmttokens = [PYIF, PYWHILE, PRINT, PYPASS, NAME, BREAK]
+
+# globals
+# Global Variables
+# Section 1: Debugging and logging
+trace = False           # Controls token trace
+only_tokenizer = False   # If True, exit to OS after tokenizer
+dump_tokenizer = True   # Should we dump the trace from the tokenizer into a local file?
+token_dump_file = 'C:/Dev/Projects/Intepreter/src/pyint/token.dump'
+
+# Section 2: Everything else
+source = ''             # receives entire source program
+sourceindex = 0         # index into source
+line = 0                # current line number
+column = 0              # current column number
+tokenlist = []          # list of tokens to be consumed by parser
+tokenindex = 0
+prevchar = '\n'         # '\n' in prevchar signals start of new line
+blankline = True        # Set to False if line is not blank
+symboltable = {}        # Symbol Table for the interpreter
+operandstack = []       # Use a list for the stack
+# For indentation and dedentation
+# Setup as column 1
+indentstack = [1]
+# For tracking parent loop indentations so that we can break out of it, see breakstat() and codeblock() for why
+indentloop = []
+flagloop = False
+flagbreak = False
+flagbreakloop = False

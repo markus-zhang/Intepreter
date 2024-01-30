@@ -10,32 +10,11 @@ class Token:
         self.category = category
         self.lexeme = lexeme
 
-# Global Variables
-# Section 1: Debugging and logging
-trace = False           # Controls token trace
-only_tokenizer = False   # If True, exit to OS after tokenizer
-dump_tokenizer = True   # Should we dump the trace from the tokenizer into a local file?
-token_dump_file = 'C:/Dev/Projects/Intepreter/src/pyint/token.dump'
-
-# Section 2: Everything else
-source = ''             # receives entire source program
-sourceindex = 0         # index into source
-line = 0                # current line number
-column = 0              # current column number
-tokenlist = []          # list of tokens to be consumed by parser
-tokenindex = 0
-prevchar = '\n'         # '\n' in prevchar signals start of new line
-blankline = True        # Set to False if line is not blank
-symboltable = {}        # Symbol Table for the interpreter
-operandstack = []       # Use a list for the stack
-# For indentation and dedentation
-# Setup as column 1
-indentstack = [1]
-# For tracking parent loop indentations so that we can break out of it, see breakstat() and codeblock() for why
-indentloop = []
-flagloop = False
-flagbreak = False
-flagbreakloop = False
+#-------------------------------------------------------------#
+#                                                             #
+#                          TOKENIZER                          #  
+#                                                             #  
+#-------------------------------------------------------------#
 
 # getchar() gets next char from source and adjusts line and column
 def getchar():
@@ -88,7 +67,7 @@ def tokenizer():
 
         token = Token(line, column, None, '')
 
-        # Start of unsigned int?
+        # Start of unsigned num?
         if curchar.isdigit() or curchar == '.':
             token.category = UNSIGNEDNUM
             flag_fp = False
@@ -107,6 +86,10 @@ def tokenizer():
                         flag_fp = True
                     elif not curchar.isdigit():
                         break
+            if flag_fp is False:
+                token.category = INTEGER
+            else:
+                token.category = FLOAT
 
         # Start of name?
         elif curchar.isalpha() or curchar == '_':
@@ -455,7 +438,8 @@ while a < b:
 # <factor>          -> '+' <factor>
 # <factor>          -> '-' <factor>
 # <factor>          -> NAME
-# <factor>          -> UNSIGNEDNUM
+# <factor>          -> INTEGER
+# <factor>          -> FLOAT
 # <factor>          -> STRING
 # <factor>          -> 'True'
 # <factor>          -> 'False'
@@ -579,6 +563,8 @@ def assignmentstmt():
         if compound_assign_op.category == ADDASSIGN:
             if is_operatable(operator=ADDASSIGN, left_type=left_type, right_type=right_type):
                 symboltable[left] = symboltable[left] + operand_right
+                if left_type == 'int' and right_type == 'int':
+                    symboltable[left] = int(symboltable[left])
             else:
                 raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[ADDASSIGN]} {right_type}")
         elif compound_assign_op.category == SUBASSIGN:
@@ -925,7 +911,8 @@ def factor():
     # <factor>          -> '+' <factor>
     # <factor>          -> '-' <factor>
     # <factor>          -> NAME
-    # <factor>          -> UNSIGNEDNUM
+    # <factor>          -> INTEGER
+    # <factor>          -> FLOAT
     # <factor>          -> STRING
     # <factor>          -> 'True'
     # <factor>          -> 'False'
@@ -950,8 +937,11 @@ def factor():
             raise RuntimeError(f"Name {token.lexeme} is not defined.")
         operandstack.append(symboltable[token.lexeme])
         advance()
-    elif token.category == UNSIGNEDNUM:
+    elif token.category == FLOAT:
         operandstack.append(float(token.lexeme))
+        advance()
+    elif token.category == INTEGER:
+        operandstack.append(int(token.lexeme))
         advance()
     elif token.category == STRING:
         operandstack.append(token.lexeme)
