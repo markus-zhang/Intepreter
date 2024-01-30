@@ -1,6 +1,7 @@
 import sys
 import os
 from header import *
+from type import is_operatable
 
 class Token:
     def __init__(self, line, column, category, lexeme) -> None:
@@ -573,14 +574,28 @@ def assignmentstmt():
         relexpr()
         # Added type checking
         operand_right = operandstack.pop()
+        left_type = type(symboltable[left]).__name__
+        right_type = type(operand_right).__name__
         if compound_assign_op.category == ADDASSIGN:
-            symboltable[left] = symboltable[left] + operand_right
+            if is_operatable(operator=ADDASSIGN, left_type=left_type, right_type=right_type):
+                symboltable[left] = symboltable[left] + operand_right
+            else:
+                raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[ADDASSIGN]} {right_type}")
         elif compound_assign_op.category == SUBASSIGN:
-            symboltable[left] = symboltable[left] - operand_right
+            if is_operatable(operator=SUBASSIGN, left_type=left_type, right_type=right_type):
+                symboltable[left] = symboltable[left] - operand_right
+            else:
+                raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[SUBASSIGN]} {right_type}")
         elif compound_assign_op.category == MULASSIGN:
-            symboltable[left] = symboltable[left] * operand_right
+            if is_operatable(operator=MULASSIGN, left_type=left_type, right_type=right_type):
+                symboltable[left] = symboltable[left] * operand_right
+            else:
+                raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[MULASSIGN]} {right_type}")
         elif compound_assign_op.category == DIVASSIGN:
-            symboltable[left] = symboltable[left] / operand_right
+            if is_operatable(operator=DIVASSIGN, left_type=left_type, right_type=right_type):
+                symboltable[left] = symboltable[left] / operand_right
+            else:
+                raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[DIVASSIGN]} {right_type}")
         
 
 def passstmt():

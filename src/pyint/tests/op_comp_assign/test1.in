@@ -1,0 +1,8 @@
+a = 2
+b = 5
+a += b
+print(a)
+c='I love you!'
+d='Whatever !'
+c += d
+print(c)

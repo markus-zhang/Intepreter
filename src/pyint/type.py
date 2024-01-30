@@ -9,7 +9,7 @@ operatable = {
 }
 
 def is_operatable(operator, left_type, right_type):
-    return (left_type, right_type) in operatable(operator)
+    return (left_type, right_type) in operatable[operator]
 
 # Test
 def main():
