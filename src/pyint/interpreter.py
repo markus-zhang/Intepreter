@@ -813,6 +813,17 @@ def codeblock():
     while token.category == NEWLINE:
         consume(NEWLINE)
     consume(INDENT)
+    # TODO: We need to fix a bug regarding empty codeblocks (see below)
+    """
+    Consider this empty codeblock -- there is nothing in this elif except for a few comments.
+    elif counter == 2:
+        # Test '=='
+        # No direct string comparison to float_b, as str() is not allowed
+    
+    We should throw a RuntimeError.
+    """
+    if token.category not in stmttokens:
+        raise RuntimeError(f"Expecting a statement but get {catnames[token.category]}")
     while token.category in [PRINT, NAME, PYPASS, PYIF, PYWHILE, BREAK]:
         stmt()
         """
@@ -848,18 +859,39 @@ def relexpr():
         advance()
         expr()
         right = operandstack.pop()
+        left_type = type(left).__name__
+        right_type = type(right).__name__
         if token_op.category == LESSTHAN:
-            operandstack.append(left < right)
+            if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
+                operandstack.append(left < right)
+            else:
+                raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
         elif token_op.category == LESSEQUAL:
-            operandstack.append(left <= right)
+            if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
+                operandstack.append(left <= right)
+            else:
+                raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
         elif token_op.category == EQUAL:
-            operandstack.append(left == right)
+            if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
+                operandstack.append(left == right)
+            else:
+                # Users should be able to put anything on both ends and get either True or False
+                operandstack.append(False)
         elif token_op.category == NOTEQUAL:
-            operandstack.append(left != right)
+            if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
+                operandstack.append(left != right)
+            else:
+                operandstack.append(True)
         elif token_op.category == GREATEREQUAL:
-            operandstack.append(left >= right)
+            if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
+                operandstack.append(left >= right)
+            else:
+                raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
         elif token_op.category == GREATERTHAN:
-            operandstack.append(left > right)
+            if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
+                operandstack.append(left > right)
+            else:
+                raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
 
 def expr():
     # <expr>            -> <term> ('+' <term>)*

@@ -1,11 +1,21 @@
 from header import *
 
 # "Operatable" dictionary
+# [LESSTHAN, LESSEQUAL, EQUAL, NOTEQUAL, GREATEREQUAL, GREATERTHAN]
 operatable = {
-    ADDASSIGN: [('int', 'int'), ('float', 'float'), ('int', 'float'), ('float', 'int'), ('str', 'str')],
-    SUBASSIGN: [('int', 'int'), ('float', 'float'), ('int', 'float'), ('float', 'int')],
-    MULASSIGN: [('int', 'int'), ('float', 'float'), ('int', 'float'), ('float', 'int'), ('str', 'int')],
-    DIVASSIGN: [('int', 'int'), ('float', 'float'), ('int', 'float'), ('float', 'int')]
+    #------------------------------ Composite Assignments ------------------------------
+    ADDASSIGN:      [('int', 'int'), ('float', 'float'), ('int', 'float'), ('float', 'int'), ('str', 'str')],
+    SUBASSIGN:      [('int', 'int'), ('float', 'float'), ('int', 'float'), ('float', 'int')],
+    MULASSIGN:      [('int', 'int'), ('float', 'float'), ('int', 'float'), ('float', 'int'), ('str', 'int')],
+    DIVASSIGN:      [('int', 'int'), ('float', 'float'), ('int', 'float'), ('float', 'int')],
+    #------------------------------ Comparison Operators -------------------------------
+    LESSTHAN:       [('int', 'int'), ('float', 'float'), ('int', 'float'), ('float', 'int'), ('str', 'str')],
+    LESSEQUAL:      [('int', 'int'), ('float', 'float'), ('int', 'float'), ('float', 'int'), ('str', 'str')],
+    # EQUAL and NOTEQUAL are a bit special, users should be able to put whatever type on both ends, but the interpreter needs to return False instead of spitting out a RuntimeError
+    EQUAL:          [('int', 'int'), ('float', 'float'), ('int', 'float'), ('float', 'int'), ('str', 'str')],
+    NOTEQUAL:       [('int', 'int'), ('float', 'float'), ('int', 'float'), ('float', 'int'), ('str', 'str')],
+    GREATEREQUAL:   [('int', 'int'), ('float', 'float'), ('int', 'float'), ('float', 'int'), ('str', 'str')],
+    GREATERTHAN:    [('int', 'int'), ('float', 'float'), ('int', 'float'), ('float', 'int'), ('str', 'str')],
 }
 
 def is_operatable(operator, left_type, right_type):
