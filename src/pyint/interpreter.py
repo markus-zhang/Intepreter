@@ -642,7 +642,8 @@ def ifstmt():
     But what to do if condition is False?
     We should track INDENT - DEDENT pairs
     """
-    if condition is True:
+    # NOTE: I switched the code from "if condition is True:" to "if condition:", so that /tests/misc/if_01.in has the same result compared to CPython.
+    if condition:
         codeblock()
         """
         In case codeblock() encounters a "break", the "break" statement should be able to figure out the next token to execute. We should immediately return from whilestmt (and its children statements)

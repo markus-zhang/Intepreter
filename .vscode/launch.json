@@ -12,7 +12,7 @@
             "console": "integratedTerminal",
             "stopOnEntry": true,
             "justMyCode": false,
-            "args": ["C:/Dev/Projects/Intepreter/src/pyint/tests/op_comparison/test_op_comp.in"]
+            "args": ["C:/Dev/Projects/Intepreter/src/pyint/tests/misc/if_02.in"]
         }
     ]
 }
