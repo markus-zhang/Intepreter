@@ -68,6 +68,7 @@ def tokenizer():
         token = Token(line, column, None, '')
 
         # Start of unsigned num?
+        # UNSIGNEDNUM is a placeholder, eventually it is either an INTEGER or a FLOAT
         if curchar.isdigit() or curchar == '.':
             token.category = UNSIGNEDNUM
             flag_fp = False
@@ -429,7 +430,7 @@ while a < b:
     do something else
 """
 # <codeblock>       -> <NEWLINE> 'INDENT' <stmt>+ 'DEDENT'
-# <relexpr>         -> <expr> [ ('<' | '<=' | '==' | '!=' | '>=' | '>') <expr>]
+# <relexpr>         -> <expr> [ ('<' | '<=' | '==' | '!=' | '>=' | '>') <expr>]*
 # <expr>            -> <term> ('+' <term>)*
 # <expr>            -> <term> ('-' <term>)*
 # <term>            -> <factor> ('*' <factor>)*
@@ -847,52 +848,70 @@ def codeblock():
     consume(DEDENT)
 
 def relexpr():
-    # <relexpr>         -> <expr> [ ('<' | '<=' | '==' | '!=' | '>=' | '>') <expr>]
+    # <relexpr>         -> <expr> [ ('<' | '<=' | '==' | '!=' | '>=' | '>') <expr>]*
+    """
+    How can we deal with the chained expressions?
+
+    print(30 > 20 > 10 < 100 >= 30 <= 30 < 50 != 50.01)
+    print(10 > 20 > 30 == 30)
+    print(-30 > -20 > -10)
+    """
+    left_operand = None
+    right_operand = None
+    result = None
     expr()
-    if token.category in [LESSTHAN, LESSEQUAL, EQUAL, NOTEQUAL, GREATEREQUAL, GREATERTHAN]:
-        # Only pop when there is a comparison operator following left side
-        # Consider this:
-        # a = 2
-        # If we pop immediately after the previous expr(), without checking whether there is a comparison operator after a, then a would be popped in relexpr(), while in assignmentstat() we will have to pop() again, which causes error
-        left = operandstack.pop()
-        # Save operator token
-        token_op = token
-        advance()
-        expr()
-        right = operandstack.pop()
-        left_type = type(left).__name__
-        right_type = type(right).__name__
-        if token_op.category == LESSTHAN:
-            if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
-                operandstack.append(left < right)
+
+    while True:
+        if token.category in [LESSTHAN, LESSEQUAL, EQUAL, NOTEQUAL, GREATEREQUAL, GREATERTHAN]:
+            if right_operand is None:
+                left_operand = operandstack.pop()
             else:
-                raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
-        elif token_op.category == LESSEQUAL:
-            if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
-                operandstack.append(left <= right)
-            else:
-                raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
-        elif token_op.category == EQUAL:
-            if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
-                operandstack.append(left == right)
-            else:
-                # Users should be able to put anything on both ends and get either True or False
-                operandstack.append(False)
-        elif token_op.category == NOTEQUAL:
-            if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
-                operandstack.append(left != right)
-            else:
-                operandstack.append(True)
-        elif token_op.category == GREATEREQUAL:
-            if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
-                operandstack.append(left >= right)
-            else:
-                raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
-        elif token_op.category == GREATERTHAN:
-            if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
-                operandstack.append(left > right)
-            else:
-                raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
+                left_operand = right_operand
+
+            token_op = token
+            advance()
+            expr()
+            right_operand = operandstack.pop()
+
+            left_type = type(left_operand).__name__
+            right_type = type(right_operand).__name__
+            
+            if token_op.category == LESSTHAN:
+                if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
+                    result = (left_operand < right_operand) if result is None else (result and (left_operand < right_operand))
+                else:
+                    raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
+            elif token_op.category == LESSEQUAL:
+                if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
+                    result = (left_operand <= right_operand) if result is None else (result and (left_operand <= right_operand))
+                else:
+                    raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
+            elif token_op.category == EQUAL:
+                if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
+                    result = (left_operand == right_operand) if result is None else (result and (left_operand == right_operand))
+                else:
+                    # Users should be able to put anything on both ends and get either True or False
+                    operandstack.append(False)
+            elif token_op.category == NOTEQUAL:
+                if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
+                    result = (left_operand != right_operand) if result is None else (result and (left_operand != right_operand))
+                else:
+                    operandstack.append(True)
+            elif token_op.category == GREATEREQUAL:
+                if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
+                    result = (left_operand >= right_operand) if result is None else (result and (left_operand >= right_operand))
+                else:
+                    raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
+            elif token_op.category == GREATERTHAN:
+                if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
+                    result = (left_operand > right_operand) if result is None else (result and (left_operand > right_operand))
+                else:
+                    raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
+        else:
+            # We only need to push result onto the stack if there is at least one comparison
+            if result is not None:
+                operandstack.append(result)
+            break
 
 def expr():
     # <expr>            -> <term> ('+' <term>)*
