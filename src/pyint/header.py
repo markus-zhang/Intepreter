@@ -40,6 +40,9 @@ PYELIF              = 37
 MODULO              = 38
 INTEGER             = 39
 FLOAT               = 40
+DEF                 = 41
+GLOBAL              = 42
+RETURN              = 43
 ERROR               = 255   # if none of above, then error
 
 # Displayable names for each token category, using dictionary
@@ -85,6 +88,9 @@ catnames = {
     38: 'MODULO',
     39: 'INTEGER',
     40: 'FLOAT',
+    41: 'DEF',
+    42: 'GLOBAL',
+    43: 'RETURN',
     255:'ERROR'
 }
 
@@ -99,7 +105,10 @@ keywords = {
     'True':     PYTRUE,
     'False':    PYFALSE,
     'None':     PYNONE,
-    'break':    BREAK
+    'break':    BREAK,
+    'def':      DEF,
+    'global':   GLOBAL,
+    'return':   RETURN
 }
 
 # One-character tokens and their token categories
@@ -134,7 +143,7 @@ only_tokenizer = False   # If True, exit to OS after tokenizer
 dump_tokenizer = True   # Should we dump the trace from the tokenizer into a local file?
 token_dump_file = 'C:/Dev/Projects/Intepreter/src/pyint/token.dump'
 
-# Section 2: Everything else
+# Section 2: Lexing
 source = ''             # receives entire source program
 sourceindex = 0         # index into source
 line = 0                # current line number
@@ -143,11 +152,29 @@ tokenlist = []          # list of tokens to be consumed by parser
 tokenindex = 0
 prevchar = '\n'         # '\n' in prevchar signals start of new line
 blankline = True        # Set to False if line is not blank
+
+# Section 3: Parsing
+# For function calls
+# Symbol Table:
 symboltable = {}        # Symbol Table for the interpreter
+# We need to split the symbol table into two: local and global
+localsymboltable = {}
+globalsymboltable = {}
+# OK now we have two symbol tables, which one do we store into/load from?
+# We track function call depth, 0 means global, positive means local, and negative means we made some mistakes in tracking
+functioncalldepth = 0
+# If some variables are declared global using the "global" keyword, put into this list so that we know
+globalvartuple:set = set()
+# For return addresses, since function calls can be chained, a stack is the natural solution
+returnaddrstack = []
+
+# For expression evaulation and fetch
 operandstack = []       # Use a list for the stack
+
 # For indentation and dedentation
 # Setup as column 1
 indentstack = [1]
+
 # For tracking parent loop indentations so that we can break out of it, see breakstat() and codeblock() for why
 indentloop = []
 flagloop = False

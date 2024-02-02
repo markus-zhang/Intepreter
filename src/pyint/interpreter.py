@@ -395,8 +395,12 @@ def removecomment():
 # <simplestmt>      -> <assignmentstmt>
 # <simplestmt>      -> <passstmt>
 # <simplestmt>      -> <breakstmt>
+# <simplestmt>      -> <globalstmt>
+# <simplestmt>      -> <returnstmt>
+# <simplestmt>      -> <functioncallstmt>
 # <compoundstmt>    -> <whilestmt>
 # <compoundstmt>    -> <ifstmt>
+# <compoundstmt>    -> <defstmt> 
 """
 <printstmt> needs to successfully parse the following:
 print()
@@ -412,8 +416,13 @@ print(abc, dr, fe,) # Last comma should be accepted but ignored
 # <assignmentstmt>  -> NAME '/=' <relexpr>
 # <passstmt>        -> 'pass'
 # <breakstmt>       -> 'break'
+# <globalstmt>      -> 'global' NAME(',' NAME)*
+# <returnstmt>      -> 'return' [<relexpr>]
+# Q: For <functioncallstmt>, why is NAME'(' [<relexpr>] (',' <relexpr>)* ')' wrong? Because this would allow formats such as foo(,12) which is wrong
+# <functioncallstmt>-> NAME'(' [<relexpr> (',' <relexpr>)*] ')'
 # <whilestmt>       -> 'while' <relexpr> ':' <codeblock>
 # <ifstmt>          -> 'if' <relexpr> ':' <codeblock> ('elif' <relexpr> ':' <codeblock>)* ['else' ':' <codeblock>]
+# <defstmt>         -> 'def' NAME '(' [NAME (, NAME)*] ')'':' <codeblock>
 """
 <codeblock> is not recursive, because it is not neccesarily true that every line in a while/if block needs an indent-dedent:
 - Nested:
@@ -459,7 +468,7 @@ def program():
 def stmt():
     # <stmt>            -> <simplestmt> NEWLINE+
     # <stmt>            -> <compoundstmt>
-    if token.category in [PRINT, NAME, PYPASS, BREAK]:
+    if token.category in [PRINT, NAME, PYPASS, BREAK, GLOBAL, RETURN]:
         simplestmt()
         while token.category == NEWLINE:
             consume(NEWLINE)
@@ -480,6 +489,10 @@ def simplestmt():
         passstmt()
     elif token.category == BREAK:
         breakstmt()
+    elif token.category == GLOBAL:
+        globalstmt()
+    elif token.category == RETURN:
+        returnstmt()
     else:
         raise RuntimeError("Expecting PRINT, NAME, PYPASS or BREAK") 
     
@@ -623,6 +636,35 @@ def breakstmt():
             flagbreak = True
             break
 
+
+def globalstmt():
+    # <globalstmt>      -> 'global' NAME(',' NAME)*
+    # If we are already in global scope then we don't need it
+    if functioncalldepth == 0:
+        raise RuntimeError(f"'global' keyboard can only be used within functions.")
+    advance()
+    """
+    We need to check whether those names were in globalsymboltable dict, and if yes, push into globalvartuple set
+    """
+    while True:
+        symbol_name = token.lexeme
+        if token.lexeme in globalsymboltable:
+            globalvartuple.add(symbol_name)
+        else:
+            raise RuntimeError(f"The variable {symbol_name} has not been defined.")
+        advance()
+        # Is it a comma? If so then there are more symboles to be added
+        if token.lexeme == ',':
+            advance()
+        else:
+            break
+        
+
+    # Please note that the function caller need to clear globalvartuple for next use
+
+
+def returnstmt():
+    pass
 
 def compoundstmt():
     # <compoundstmt>    -> <whilestmt>
