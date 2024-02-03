@@ -669,10 +669,13 @@ def returnstmt():
 def compoundstmt():
     # <compoundstmt>    -> <whilestmt>
     # <compoundstmt>    -> <ifstmt>
+    # <compoundstmt>    -> <defstmt>
     if token.category == PYIF:
         ifstmt()
     elif token.category == PYWHILE:
         whilestmt()
+    elif token.category == NAME:
+        defstmt()
 
 def ifstmt():
     # <ifstmt>          -> 'if' <relexpr> ':' <codeblock> ('elif' <relexpr> ':' <codeblock>)* ['else' ':' <codeblock>]
@@ -837,6 +840,12 @@ def whilestmt():
                     indentloop.pop()
                     return
                 advance()
+
+def defstmt():
+    # <defstmt>         -> 'def' NAME '(' [NAME (, NAME)*] ')'':' <codeblock>
+    """
+    Primary function execution: read README.md for more details of the whole scheme
+    """
 
 def codeblock():
     # <codeblock>       -> <NEWLINE> 'INDENT' <stmt>+ 'DEDENT'

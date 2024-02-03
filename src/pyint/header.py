@@ -156,9 +156,10 @@ blankline = True        # Set to False if line is not blank
 # Section 3: Parsing
 # For function calls
 # Symbol Table:
-symboltable = {}        # Symbol Table for the interpreter
+symboltable = {}                # Symbol Table for the interpreter
 # We need to split the symbol table into two: local and global
 localsymboltable = {}
+localsymboltablebackup = {}     # This is for function call within function call, basically this is for the caller scope while localsymboltable is for callee scope
 globalsymboltable = {}
 # OK now we have two symbol tables, which one do we store into/load from?
 # We track function call depth, 0 means global, positive means local, and negative means we made some mistakes in tracking
@@ -169,7 +170,7 @@ globalvartuple:set = set()
 returnaddrstack = []
 
 # For expression evaulation and fetch
-operandstack = []       # Use a list for the stack
+operandstack = []               # Use a list for the stack
 
 # For indentation and dedentation
 # Setup as column 1
