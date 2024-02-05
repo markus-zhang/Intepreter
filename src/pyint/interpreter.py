@@ -472,7 +472,7 @@ def stmt():
         simplestmt()
         while token.category == NEWLINE:
             consume(NEWLINE)
-    elif token.category in [PYIF, PYWHILE]:
+    elif token.category in [PYIF, PYWHILE, DEF]:
         compoundstmt()
     else:
         raise RuntimeError(f"Expecting print, a name, pass, if, while, but get {token.category}")
@@ -549,14 +549,53 @@ def printstmt():
     # consume(RIGHTPAREN)
     """
 
+def getleftname(name:str):
+    """
+    Helper function to locate left side name in symbol tables.
+    Caller function should use try-exception block.
+
+    Difference between left name and right name is:
+    - right name must exist already, but left name could be new
+    Args:
+        name (str): name of the variable
+    Summary:
+    - If name is None then raise an error
+    - First check whether if name is in globalvardeclared
+        - if True, then name MUST exist in globalsymboltable
+            - if not, then getname() must raises an error to be caught by the caller
+            - if yes, return globalsymboltable[name]
+        - if False, then check whether if name is in localvardeclared
+            - if not, then it's a new local variable -> insert into localvardeclared
+            - return localvardeclared[name]
+    """
+    if name is None:
+        raise ValueError(f"{__name__}: parameter name is None")
+    if name in globalvardeclared:
+        if name in globalsymboltable:
+            return globalsymboltable[name]
+        else:
+            raise KeyError(f"NAME {name} is declared in the global ")
+    else:
+        if name not in localsymboltable:
+            localsymboltable[name] = None
+        return localsymboltable[name]
+
+
+
 def assignmentstmt():
     # <assignmentstmt>  -> NAME '=' <relexpr>
     # <assignmentstmt>  -> NAME '+=' <relexpr>
     # <assignmentstmt>  -> NAME '-=' <relexpr>
     # <assignmentstmt>  -> NAME '*=' <relexpr>
     # <assignmentstmt>  -> NAME '/=' <relexpr>
-    # We already know the first token must be NAME so no need to check
-    # Pick up the token as symbol
+    """
+    It is a lot more complicated when function call is being implemented.
+    1. Check globalvardeclared, if it's within then we are in global, AND we should already have this variable defined.
+        - We then proceed to check whether it exists, if not we raise.
+    2. Check functioncalldepth, if it's 0 then we are in global
+
+    """
+    intermediate = None
     left = token.lexeme
     advance()
 
@@ -565,38 +604,71 @@ def assignmentstmt():
         relexpr()
         # expr() pushes onto top of the operand stack, update symbol table
         # global symboltable
-        symboltable[left] = operandstack.pop()
+        intermediate = operandstack.pop()
+        # NOTE: Assign intermediate to proper symbol
+        if left in globalvardeclared or functioncalldepth == 0:
+            try:
+                globalsymboltable[left] = intermediate
+            except KeyError:
+                raise RuntimeError(f"NAME {left} is declared as global but not defined in global scope")
+        else:
+            # Then it must be in local scope, even if not found - in that case we will create a new entry
+            localsymboltable[left] = intermediate
     elif token.category in [ADDASSIGN, SUBASSIGN, MULASSIGN, DIVASSIGN]:
         compound_assign_op = token
         advance()   # No need to check again
         relexpr()
         # Added type checking
         operand_right = operandstack.pop()
-        left_type = type(symboltable[left]).__name__
+        # NOTE: Switch symboltable to one of the other two symbol tables
+        symbol_table_left = None
+        if left in globalvardeclared or functioncalldepth == 0:
+            if left in globalsymboltable:
+                symbol_table_left = globalsymboltable
+            else:
+                raise RuntimeError(f"NAME {left} is declared in the global scope but is not present")
+        else:
+            if left not in localsymboltable:
+                raise RuntimeError(f"NAME {left} is not present in the local scope ")
+            symbol_table_left = localsymboltable
+        
+        left_type = type(symbol_table_left[left]).__name__
         right_type = type(operand_right).__name__
         if compound_assign_op.category == ADDASSIGN:
             if is_operatable(operator=ADDASSIGN, left_type=left_type, right_type=right_type):
-                symboltable[left] = symboltable[left] + operand_right
+                intermediate = symbol_table_left[left] + operand_right
                 if left_type == 'int' and right_type == 'int':
-                    symboltable[left] = int(symboltable[left])
+                    intermediate = int(intermediate)
             else:
                 raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[ADDASSIGN]} {right_type}")
         elif compound_assign_op.category == SUBASSIGN:
             if is_operatable(operator=SUBASSIGN, left_type=left_type, right_type=right_type):
-                symboltable[left] = symboltable[left] - operand_right
+                intermediate = symbol_table_left[left] - operand_right
             else:
                 raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[SUBASSIGN]} {right_type}")
         elif compound_assign_op.category == MULASSIGN:
             if is_operatable(operator=MULASSIGN, left_type=left_type, right_type=right_type):
-                symboltable[left] = symboltable[left] * operand_right
+                intermediate = symbol_table_left[left] * operand_right
             else:
                 raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[MULASSIGN]} {right_type}")
         elif compound_assign_op.category == DIVASSIGN:
             if is_operatable(operator=DIVASSIGN, left_type=left_type, right_type=right_type):
-                symboltable[left] = symboltable[left] / operand_right
+                intermediate = symbol_table_left[left] / operand_right
             else:
                 raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[DIVASSIGN]} {right_type}")
         
+        symbol_table_left[left] = intermediate
+        """
+        # NOTE: Assign intermediate to proper symbol
+        if left in globalvardeclared:
+            try:
+                globalsymboltable[left] = intermediate
+            except KeyError:
+                raise RuntimeError(f"NAME {left} is declared as global but not defined in global scope")
+        else:
+            # Then it must be in local scope, even if not found - in that case we will create a new entry
+            localsymboltable[left] = intermediate
+        """
 
 def passstmt():
     advance()
@@ -649,7 +721,7 @@ def globalstmt():
     while True:
         symbol_name = token.lexeme
         if token.lexeme in globalsymboltable:
-            globalvartuple.add(symbol_name)
+            globalvardeclared.add(symbol_name)
         else:
             raise RuntimeError(f"The variable {symbol_name} has not been defined.")
         advance()
@@ -674,7 +746,7 @@ def compoundstmt():
         ifstmt()
     elif token.category == PYWHILE:
         whilestmt()
-    elif token.category == NAME:
+    elif token.category == DEF:
         defstmt()
 
 def ifstmt():
@@ -844,8 +916,68 @@ def whilestmt():
 def defstmt():
     # <defstmt>         -> 'def' NAME '(' [NAME (, NAME)*] ')'':' <codeblock>
     """
-    Primary function execution: read README.md for more details of the whole scheme
+    Primary function execution: read README.md for more details of the whole scheme.
+
+    In globalsymboltable, each function takes the format of:
+    "foo":{
+        "parameters": [
+            {"a": 1},
+            {"b": 2},
+            {"c": 3}
+        ],
+        "entry":23
+    }
     """
+    advance()
+    function_name = token.lexeme
+    function_parameters = []
+    if function_name in globalsymboltable:
+        # Double definition, illegal
+        raise RuntimeError(f"Function {function_name} was already defined")
+    else:
+        globalsymboltable[function_name] = {"parameters": function_parameters, "entry": None}
+    advance()
+
+    # Parameter names
+    consume(LEFTPAREN)
+    while True:
+        token_cat = token.category
+        if token_cat == RIGHTPAREN:
+            break
+        elif token_cat == NAME:
+            # Must be a parameter
+            globalsymboltable[function_name]["parameters"].append({token_cat: None})
+            advance()
+        elif token_cat == COMMA:
+            advance()
+            if token.category == NAME:
+                # Must be a parameter
+                globalsymboltable[function_name]["parameters"].append({token_cat: None})
+                advance()
+            else:
+                raise RuntimeError(f"Expecting NAME after COMMA")
+        else:
+            raise RuntimeError(f"Expecting COMMA and NAME but get {catnames[token_cat]}")
+
+    consume(RIGHTPAREN)
+    consume(COLON)
+    # Now we need to find the entry point and then skip the rest of the function
+    while True:
+        if token.category != INDENT:
+            advance()
+        else:
+            # This is the entry point, recall that <codeblock> needs an INDENT token at the beginning
+            globalsymboltable[function_name]["entry"] = tokenindex
+            break
+    # Skip the rest of the function
+    while True:
+        token_col = token.column
+        token_cat = token.category
+        # TODO: Need to de-hardcode token_col == 1 if we want to allow multiple layers of function definition (def within a def)
+        if token_col == 1 and token_cat not in [INDENT, DEDENT]:
+            break
+        else:
+            advance()
 
 def codeblock():
     # <codeblock>       -> <NEWLINE> 'INDENT' <stmt>+ 'DEDENT'
@@ -1035,10 +1167,26 @@ def factor():
         right = operandstack.pop()
         operandstack.append(-1 * right)
     elif token.category == NAME:
-        # NAME in <factor> is always on the right side, so check whether it exists
-        if token.lexeme not in symboltable:
-            raise RuntimeError(f"Name {token.lexeme} is not defined.")
-        operandstack.append(symboltable[token.lexeme])
+        """
+        With functional call implementation, we need to do the following checks:
+        - What is the current scope? (functioncalldepth == 0 or > 0?)
+        - Is variable declared to be global? (check globalvardeclared)
+        - If we are in local scope and cannot find the variable, don't forget to check the global scope as well
+        """
+        if token.lexeme in globalvardeclared:
+            if token.lexeme not in globalsymboltable:
+                raise RuntimeError(f"Name {token.lexeme} is decalred to be global yet not defined in global scope.")
+            else:
+                operandstack.append(globalsymboltable[token.lexeme])
+        else:
+            if token.lexeme not in localsymboltable:
+                if token.lexeme not in globalsymboltable:
+                    raise RuntimeError(f"Name {token.lexeme} is not defined in local scope, and neither is it defined in the global scope.")
+                else:
+                    operandstack.append(globalsymboltable[token.lexeme])
+            else:
+                operandstack.append(localsymboltable[token.lexeme])
+
         advance()
     elif token.category == FLOAT:
         operandstack.append(float(token.lexeme))

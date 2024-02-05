@@ -133,7 +133,7 @@ smalltokens = {
     '':     EOF
 }
 
-stmttokens = [PYIF, PYWHILE, PRINT, PYPASS, NAME, BREAK]
+stmttokens = [PYIF, PYWHILE, PRINT, PYPASS, NAME, BREAK, DEF]
 
 # globals
 # Global Variables
@@ -164,8 +164,8 @@ globalsymboltable = {}
 # OK now we have two symbol tables, which one do we store into/load from?
 # We track function call depth, 0 means global, positive means local, and negative means we made some mistakes in tracking
 functioncalldepth = 0
-# If some variables are declared global using the "global" keyword, put into this list so that we know
-globalvartuple:set = set()
+# If some variables are declared global using the "global" keyword, put into this set so that we know
+globalvardeclared:set = set()
 # For return addresses, since function calls can be chained, a stack is the natural solution
 returnaddrstack = []
 
