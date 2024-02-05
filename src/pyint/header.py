@@ -156,7 +156,7 @@ blankline = True        # Set to False if line is not blank
 # Section 3: Parsing
 # For function calls
 # Symbol Table:
-symboltable = {}                # Symbol Table for the interpreter
+# symboltable = {}                # Symbol Table for the interpreter
 # We need to split the symbol table into two: local and global
 localsymboltable = {}
 localsymboltablebackup = {}     # This is for function call within function call, basically this is for the caller scope while localsymboltable is for callee scope

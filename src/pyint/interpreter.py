@@ -603,7 +603,6 @@ def assignmentstmt():
         consume(ASSIGNOP)
         relexpr()
         # expr() pushes onto top of the operand stack, update symbol table
-        # global symboltable
         intermediate = operandstack.pop()
         # NOTE: Assign intermediate to proper symbol
         if left in globalvardeclared or functioncalldepth == 0:
@@ -621,6 +620,7 @@ def assignmentstmt():
         # Added type checking
         operand_right = operandstack.pop()
         # NOTE: Switch symboltable to one of the other two symbol tables
+        # TODO: We do not need intermediate. Since we are using symbol_table_left to point to the correct symbol table
         symbol_table_left = None
         if left in globalvardeclared or functioncalldepth == 0:
             if left in globalsymboltable:
@@ -636,39 +636,26 @@ def assignmentstmt():
         right_type = type(operand_right).__name__
         if compound_assign_op.category == ADDASSIGN:
             if is_operatable(operator=ADDASSIGN, left_type=left_type, right_type=right_type):
-                intermediate = symbol_table_left[left] + operand_right
+                symbol_table_left[left] = symbol_table_left[left] + operand_right
                 if left_type == 'int' and right_type == 'int':
-                    intermediate = int(intermediate)
+                    symbol_table_left[left] = int(symbol_table_left[left])
             else:
                 raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[ADDASSIGN]} {right_type}")
         elif compound_assign_op.category == SUBASSIGN:
             if is_operatable(operator=SUBASSIGN, left_type=left_type, right_type=right_type):
-                intermediate = symbol_table_left[left] - operand_right
+                symbol_table_left[left] = symbol_table_left[left] - operand_right
             else:
                 raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[SUBASSIGN]} {right_type}")
         elif compound_assign_op.category == MULASSIGN:
             if is_operatable(operator=MULASSIGN, left_type=left_type, right_type=right_type):
-                intermediate = symbol_table_left[left] * operand_right
+                symbol_table_left[left] = symbol_table_left[left] * operand_right
             else:
                 raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[MULASSIGN]} {right_type}")
         elif compound_assign_op.category == DIVASSIGN:
             if is_operatable(operator=DIVASSIGN, left_type=left_type, right_type=right_type):
-                intermediate = symbol_table_left[left] / operand_right
+                symbol_table_left[left] = symbol_table_left[left] / operand_right
             else:
                 raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[DIVASSIGN]} {right_type}")
-        
-        symbol_table_left[left] = intermediate
-        """
-        # NOTE: Assign intermediate to proper symbol
-        if left in globalvardeclared:
-            try:
-                globalsymboltable[left] = intermediate
-            except KeyError:
-                raise RuntimeError(f"NAME {left} is declared as global but not defined in global scope")
-        else:
-            # Then it must be in local scope, even if not found - in that case we will create a new entry
-            localsymboltable[left] = intermediate
-        """
 
 def passstmt():
     advance()
@@ -736,6 +723,22 @@ def globalstmt():
 
 
 def returnstmt():
+    pass
+
+def functioncallstmt():
+    # <functioncallstmt>-> NAME'(' [<relexpr> (',' <relexpr>)*] ')'
+    """
+    1. Locate the function in globalsymboltable
+    2. Save the return address into returnaddressstack
+    2. Duplicate the localsymboltable to localsymboltablebackup
+    3. Populate the parameter field if applicable
+        - Also populate the new localsymboltable
+        - Raise error if more/less parameters are given
+    4. Jump to the tokenindex of the function body
+    5. Execute the function body (maybe use another function "functioncallcodeblock()")
+    6. Cleanup after return
+    """
+
     pass
 
 def compoundstmt():
@@ -1153,7 +1156,7 @@ def factor():
     # <factor>          -> 'False'
     # <factor>          -> 'None'
     # <factor>          -> '(' <relexpr> ')'
-    global operandstack, symboltable
+    global operandstack
     if token.category == PLUS:
         advance()
         factor()
