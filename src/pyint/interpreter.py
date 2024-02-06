@@ -738,6 +738,34 @@ def functioncallstmt():
     5. Execute the function body (maybe use another function "functioncallcodeblock()")
     6. Cleanup after return
     """
+    function_name = token.lexeme
+    # Step 1: Check whether it is in global symbol table
+    if function_name not in globalsymboltable:
+        raise RuntimeError(f"Function {function_name} has not been defined yet")
+    
+    # Step 2: Backup local symbol table and clear the original one
+    localsymboltablebackup = localsymboltable
+    localsymboltable = {}
+
+    # Step 3: Populate the parameter field
+    """
+    In globalsymboltable, each function takes the format of:
+    "foo":{
+        "parameters": ["a", "b", "c"],
+        "entry":23
+    }
+    """
+    consume(LEFTPAREN)
+
+    counter = 0
+    while True:
+        if token.category == RIGHTPAREN:
+            break
+        else:
+            relexpr()
+            globalsymboltable[function_name]["parameters"][counter].key = operandstack.pop()
+            if token.category == COMMA:
+                advance()
 
     pass
 
@@ -923,11 +951,7 @@ def defstmt():
 
     In globalsymboltable, each function takes the format of:
     "foo":{
-        "parameters": [
-            {"a": 1},
-            {"b": 2},
-            {"c": 3}
-        ],
+        "parameters": ["a", "b", "c"],
         "entry":23
     }
     """
@@ -949,13 +973,13 @@ def defstmt():
             break
         elif token_cat == NAME:
             # Must be a parameter
-            globalsymboltable[function_name]["parameters"].append({token_cat: None})
+            globalsymboltable[function_name]["parameters"].append(token.lexeme)
             advance()
         elif token_cat == COMMA:
             advance()
             if token.category == NAME:
                 # Must be a parameter
-                globalsymboltable[function_name]["parameters"].append({token_cat: None})
+                globalsymboltable[function_name]["parameters"].append(token.lexeme)
                 advance()
             else:
                 raise RuntimeError(f"Expecting NAME after COMMA")
@@ -981,6 +1005,7 @@ def defstmt():
             break
         else:
             advance()
+    # print(globalsymboltable)
 
 def codeblock():
     # <codeblock>       -> <NEWLINE> 'INDENT' <stmt>+ 'DEDENT'
