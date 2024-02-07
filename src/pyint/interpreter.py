@@ -484,7 +484,12 @@ def simplestmt():
     if token.category == PRINT:
         printstmt()
     elif token.category == NAME:
-        assignmentstmt()
+        # could be assignment, or function call
+        token_next:token = tokenlist[tokenindex + 1]
+        if token_next.category == LEFTPAREN:
+            functioncallstmt()
+        else:
+            assignmentstmt()
     elif token.category == PYPASS:
         passstmt()
     elif token.category == BREAK:
@@ -738,12 +743,14 @@ def functioncallstmt():
     5. Execute the function body (maybe use another function "functioncallcodeblock()")
     6. Cleanup after return
     """
+    # global token
     function_name = token.lexeme
     # Step 1: Check whether it is in global symbol table
     if function_name not in globalsymboltable:
         raise RuntimeError(f"Function {function_name} has not been defined yet")
     
     # Step 2: Backup local symbol table and clear the original one
+    global localsymboltable
     localsymboltablebackup = localsymboltable
     localsymboltable = {}
 
@@ -755,19 +762,38 @@ def functioncallstmt():
         "entry":23
     }
     """
+    advance()
     consume(LEFTPAREN)
 
     counter = 0
+    parameter_num = len(globalsymboltable[function_name]["parameters"])
     while True:
         if token.category == RIGHTPAREN:
             break
         else:
             relexpr()
-            globalsymboltable[function_name]["parameters"][counter].key = operandstack.pop()
+            # This basically says, in local symbol table, 'a': some value
+            if counter >= parameter_num:
+                raise RuntimeError(f"Function {function_name} accepts {parameter_num} parameters but gets {counter}")
+            
+            localsymboltable[globalsymboltable[function_name]["parameters"][counter]] = operandstack.pop()
+            counter += 1
             if token.category == COMMA:
                 advance()
+    # Right now we don't accept default value for parameters so the numbers must match: for 3 parameters we must pass 3 values
+    if counter < parameter_num - 1:
+        raise RuntimeError(f"Function {function_name} accepts {parameter_num} parameters but gets {counter}")
+    
+    consume(RIGHTPAREN)
 
-    pass
+    # Step 4: Jump to the entry token of the function
+    tokenindex = globalsymboltable[function_name]["entry"]
+    token = tokenlist[tokenindex]
+
+    # Step 5: Execution
+    codeblock()
+
+    # Step 6: Return?
 
 def compoundstmt():
     # <compoundstmt>    -> <whilestmt>
@@ -1005,7 +1031,6 @@ def defstmt():
             break
         else:
             advance()
-    # print(globalsymboltable)
 
 def codeblock():
     # <codeblock>       -> <NEWLINE> 'INDENT' <stmt>+ 'DEDENT'
@@ -1266,7 +1291,7 @@ def consume(expectedcat: int):
         advance()
 
 def parser():
-    global token, tokenindex
+    global token
     token = tokenlist[0]
     tokenindex = 0
     program()
