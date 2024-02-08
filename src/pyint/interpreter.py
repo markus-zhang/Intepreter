@@ -1342,4 +1342,4 @@ def main():
         print(emsg)
         sys.exit(1)
 
-main()
+# main()
