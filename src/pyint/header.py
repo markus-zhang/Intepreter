@@ -1,3 +1,10 @@
+class Token:
+    def __init__(self, line, column, category, lexeme) -> None:
+        self.line = line
+        self.column = column
+        self.category = category
+        self.lexeme = lexeme
+
 # Category constants
 EOF                 = 0
 PRINT               = 1
