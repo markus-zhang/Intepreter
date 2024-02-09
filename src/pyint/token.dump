@@ -1,281 +1,141 @@
-1   1    PRINT   print
-1   6    LEFTPAREN   (
-1   7    MINUS   -
-1   8    UNSIGNEDNUM   59
-1   11    PLUS   +
-1   13    UNSIGNEDNUM   20
-1   15    TIMES   *
-1   16    UNSIGNEDNUM   3
-1   17    RIGHTPAREN   )
-1   18    NEWLINE   
+1   1    NAME   a
+1   3    ASSIGNOP   =
+1   5    INTEGER   0
+1   6    NEWLINE   
 
-2   1    NAME   a
-2   3    ASSIGNOP   =
-2   5    UNSIGNEDNUM   2
-2   6    NEWLINE   
+2   1    PYWHILE   while
+2   7    NAME   a
+2   9    LESSTHAN   <
+2   11    INTEGER   10
+2   13    COLON   :
+2   14    NEWLINE   
 
-3   1    NAME   bb_1
-3   6    ASSIGNOP   =
-3   8    MINUS   -
-3   9    LEFTPAREN   (
-3   10    NAME   a
-3   11    RIGHTPAREN   )
-3   13    PLUS   +
-3   15    UNSIGNEDNUM   12
-3   17    NEWLINE   
+3   1    INDENTATION   
+3   5    PRINT   print
+3   10    LEFTPAREN   (
+3   11    NAME   a
+3   12    RIGHTPAREN   )
+3   13    NEWLINE   
 
-4   1    PRINT   print
-4   6    LEFTPAREN   (
-4   7    NAME   a
-4   8    TIMES   *
-4   9    NAME   bb_1
-4   14    PLUS   +
-4   16    NAME   a
-4   17    TIMES   *
-4   18    UNSIGNEDNUM   3
-4   19    TIMES   *
-4   20    LEFTPAREN   (
-4   21    MINUS   -
-4   22    UNSIGNEDNUM   1
-4   24    PLUS   +
-4   26    MINUS   -
-4   27    UNSIGNEDNUM   1
-4   29    PLUS   +
-4   31    MINUS   -
-4   32    UNSIGNEDNUM   1
-4   33    RIGHTPAREN   )
-4   34    RIGHTPAREN   )
-4   35    NEWLINE   
+4   5    PYIF   if
+4   8    NAME   a
+4   10    EQUAL   ==
+4   13    INTEGER   5
+4   14    COLON   :
+4   15    NEWLINE   
 
-6   1    COMMENT_SINGLE   # start of code that tests level 2 features
-6   44    NEWLINE   
+5   1    INDENTATION   
+5   9    PYWHILE   while
+5   15    NAME   a
+5   17    LESSTHAN   <
+5   19    INTEGER   50
+5   22    LESSTHAN   <
+5   24    INTEGER   100
+5   28    GREATEREQUAL   >=
+5   31    INTEGER   100
+5   35    NOTEQUAL   !=
+5   38    INTEGER   200
+5   41    COLON   :
+5   42    NEWLINE   
 
-7   1    PRINT   print
-7   6    LEFTPAREN   (
-7   7    RIGHTPAREN   )
-7   23    COMMENT_SINGLE   # print with no args
-7   43    NEWLINE   
+6   1    INDENTATION   
+6   13    NAME   a
+6   15    ASSIGNOP   =
+6   17    NAME   a
+6   19    PLUS   +
+6   21    INTEGER   10
+6   23    NEWLINE   
 
-8   1    PYIF   if
-8   4    NAME   a
-8   6    LESSEQUAL   <=
-8   9    UNSIGNEDNUM   2
-8   10    COLON   :
-8   23    COMMENT_SINGLE   # if, no else
-8   36    NEWLINE   
+7   13    PRINT   print
+7   18    LEFTPAREN   (
+7   19    STRING   a=
+7   23    COMMA   ,
+7   25    NAME   a
+7   26    RIGHTPAREN   )
+7   27    NEWLINE   
+
+8   13    PYIF   if
+8   16    NAME   a
+8   18    GREATEREQUAL   >=
+8   21    INTEGER   30
+8   23    COLON   :
+8   24    NEWLINE   
 
 9   1    INDENTATION   
-9   4    PYIF   if
-9   7    NAME   a
-9   9    EQUAL   ==
-9   12    UNSIGNEDNUM   2
-9   13    COLON   :
-9   23    COMMENT_SINGLE   # equal operator
-9   39    NEWLINE   
+9   17    NAME   b
+9   19    ASSIGNOP   =
+9   21    INTEGER   1
+9   22    NEWLINE   
 
-10   1    INDENTATION   
-10   7    PYIF   if
-10   10    NAME   a
-10   12    GREATERTHAN   >
-10   14    UNSIGNEDNUM   1
-10   15    COLON   :
-10   23    COMMENT_SINGLE   # greater than operator
-10   46    NEWLINE   
+10   17    PYWHILE   while
+10   23    NAME   b
+10   25    LESSTHAN   <
+10   27    INTEGER   10
+10   29    COLON   :
+10   30    NEWLINE   
 
 11   1    INDENTATION   
-11   10    PYPASS   pass
-11   23    COMMENT_SINGLE   # does nothing
-11   37    NEWLINE   
+11   21    PRINT   print
+11   26    LEFTPAREN   (
+11   27    STRING   b=
+11   31    COMMA   ,
+11   33    NAME   b
+11   34    RIGHTPAREN   )
+11   35    NEWLINE   
 
-12   10    PRINT   print
-12   15    LEFTPAREN   (
-12   16    UNSIGNEDNUM   3
-12   17    RIGHTPAREN   )
-12   18    NEWLINE   
+12   21    PYIF   if
+12   24    NAME   b
+12   26    EQUAL   ==
+12   29    INTEGER   7
+12   30    COLON   :
+12   31    NEWLINE   
 
-13   1    DEDENTATION   
-13   1    DEDENTATION   
-13   1    DEDENTATION   
-13   1    PYIF   if
-13   4    NAME   a
-13   6    NOTEQUAL   !=
-13   9    UNSIGNEDNUM   2
-13   10    COLON   :
-13   23    COMMENT_SINGLE   # if-else
-13   32    NEWLINE   
+13   1    INDENTATION   
+13   25    BREAK   break
+13   30    NEWLINE   
 
-14   1    INDENTATION   
-14   4    PRINT   print
-14   9    LEFTPAREN   (
-14   10    STRING   err#or
-14   18    RIGHTPAREN   )
-14   23    COMMENT_SINGLE   # this print should be skipped
-14   53    NEWLINE   
+14   1    DEDENTATION   
+14   21    NAME   b
+14   23    ASSIGNOP   =
+14   25    NAME   b
+14   27    PLUS   +
+14   29    INTEGER   1
+14   30    NEWLINE   
 
 15   1    DEDENTATION   
-15   1    PYELSE   else
-15   5    COLON   :
-15   23    COMMENT_SINGLE   # else
-15   29    NEWLINE   
+15   1    DEDENTATION   
+15   13    PRINT   print
+15   18    LEFTPAREN   (
+15   19    STRING   Oops
+15   25    RIGHTPAREN   )
+15   26    NEWLINE   
 
-16   1    INDENTATION   
-16   4    PRINT   print
-16   9    LEFTPAREN   (
-16   10    UNSIGNEDNUM   4
-16   11    COMMA   ,
-16   12    RIGHTPAREN   )
-16   23    COMMENT_SINGLE   # this print should be executed
-16   54    NEWLINE   
+16   1    DEDENTATION   
+16   1    DEDENTATION   
+16   5    PYELSE   else
+16   9    COLON   :
+16   10    NEWLINE   
 
-17   1    DEDENTATION   
-17   1    PYWHILE   while
-17   7    NAME   a
-17   9    GREATEREQUAL   >=
-17   12    UNSIGNEDNUM   3
-17   13    COLON   :
-17   23    COMMENT_SINGLE   # greater or equal operator
-17   50    NEWLINE   
+17   1    INDENTATION   
+17   9    NAME   a
+17   11    ASSIGNOP   =
+17   13    NAME   a
+17   15    PLUS   +
+17   17    INTEGER   1
+17   18    NEWLINE   
 
-18   1    INDENTATION   
-18   4    PRINT   print
-18   9    LEFTPAREN   (
-18   10    STRING   error
-18   17    RIGHTPAREN   )
-18   23    COMMENT_SINGLE   # this print should be skipped
-18   53    NEWLINE   
+18   1    DEDENTATION   
+18   1    DEDENTATION   
+18   1    PRINT   print
+18   6    LEFTPAREN   (
+18   7    NAME   a
+18   8    RIGHTPAREN   )
+18   9    NEWLINE   
 
-19   1    DEDENTATION   
-19   1    NAME   a
-19   3    ASSIGNOP   =
-19   5    MINUS   -
-19   6    MINUS   -
-19   7    MINUS   -
-19   8    MINUS   -
-19   9    PLUS   +
-19   10    MINUS   -
-19   11    MINUS   -
-19   12    PLUS   +
-19   13    MINUS   -
-19   14    MINUS   -
-19   15    UNSIGNEDNUM   5
-19   23    COMMENT_SINGLE   # multiple unary operators
-19   49    NEWLINE   
+19   1    PRINT   print
+19   6    LEFTPAREN   (
+19   7    STRING   Good bye!
+19   18    RIGHTPAREN   )
+19   19    NEWLINE   
 
-20   1    PYWHILE   while
-20   7    NAME   a
-20   9    LESSTHAN   <
-20   11    UNSIGNEDNUM   10
-20   13    COLON   :
-20   23    COMMENT_SINGLE   # while, less than operator
-20   50    NEWLINE   
-
-21   1    INDENTATION   
-21   4    PRINT   print
-21   9    LEFTPAREN   (
-21   10    NAME   a
-21   11    RIGHTPAREN   )
-21   12    NEWLINE   
-
-22   4    NAME   a
-22   6    ASSIGNOP   =
-22   8    PLUS   +
-22   9    NAME   a
-22   11    PLUS   +
-22   13    UNSIGNEDNUM   .5
-22   16    PLUS   +
-22   18    UNSIGNEDNUM   0.5
-22   23    COMMENT_SINGLE   # floating point
-22   39    NEWLINE   
-
-23   1    DEDENTATION   
-23   1    PYIF   if
-23   4    PYTRUE   True
-23   8    COLON   :
-23   23    COMMENT_SINGLE   # True is a boolean constant
-23   51    NEWLINE   
-
-24   1    INDENTATION   
-24   4    PYPASS   pass
-24   23    COMMENT_SINGLE   # pass does nothing
-24   42    NEWLINE   
-
-25   1    DEDENTATION   
-25   1    PRINT   print
-25   6    LEFTPAREN   (
-25   7    STRING   10
-11
-25   15    RIGHTPAREN   )
-25   23    COMMENT_SINGLE   # escape sequence
-25   40    NEWLINE   
-
-26   1    PRINT   print
-26   6    LEFTPAREN   (
-26   7    STRING   1
-26   11    PLUS   +
-26   13    STRING   2
-26   16    RIGHTPAREN   )
-26   23    COMMENT_SINGLE   # string concatenation
-26   45    NEWLINE   
-
-27   1    PRINT   print
-27   6    LEFTPAREN   (
-27   7    MINUS   -
-27   8    NAME   a
-27   10    PLUS   +
-27   12    UNSIGNEDNUM   23
-27   14    RIGHTPAREN   )
-27   23    COMMENT_SINGLE   # unary minus operation
-27   46    NEWLINE   
-
-28   1    PYIF   if
-28   4    NAME   a
-28   6    LESSEQUAL   <=
-28   9    UNSIGNEDNUM   10
-28   11    COLON   :
-28   23    COMMENT_SINGLE   # less than or equal operator
-28   52    NEWLINE   
-
-29   1    INDENTATION   
-29   4    PRINT   print
-29   9    LEFTPAREN   (
-29   10    STRING   #14'\
-29   19    RIGHTPAREN   )
-29   23    COMMENT_SINGLE   # pound, quote, backslash in string
-29   58    NEWLINE   
-
-30   1    DEDENTATION   
-30   1    PRINT   print
-30   6    LEFTPAREN   (
-30   7    UNSIGNEDNUM   15
-30   9    COMMA   ,
-30   11    UNSIGNEDNUM   16
-30   13    RIGHTPAREN   )
-30   23    COMMENT_SINGLE   # one space between numbers
-30   50    NEWLINE   
-
-31   1    PYIF   if
-31   4    LEFTPAREN   (
-31   5    PYNONE   None
-31   10    NOTEQUAL   !=
-31   13    PYFALSE   False
-31   18    RIGHTPAREN   )
-31   19    COLON   :
-31   23    COMMENT_SINGLE   # None, False, not equal operator
-31   56    NEWLINE   
-
-32   1    INDENTATION   
-32   4    PRINT   print
-32   9    LEFTPAREN   (
-32   10    UNSIGNEDNUM   51
-32   12    DIVISION   /
-32   13    LEFTPAREN   (
-32   14    UNSIGNEDNUM   5
-32   16    MINUS   -
-32   18    UNSIGNEDNUM   2
-32   19    RIGHTPAREN   )
-32   20    RIGHTPAREN   )
-32   23    COMMENT_SINGLE   # subtraction
-32   36    NEWLINE   
-
-33   1    DEDENTATION   
-33   1    EOF   
+20   1    EOF   
