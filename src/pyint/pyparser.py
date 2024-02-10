@@ -307,7 +307,7 @@ class pyparser:
                 else:
                     a = a + 1
             """
-            if self.token.column <= self.indentloop[-1] and self.token.category not in [INDENT]:
+            if self.token.column <= self.indentloop[-1] and self.token.category not in [INDENT, DEDENT]:
                 if self.token.category == EOF:
                     # Edge case when there is no need to return to caller stmt()
                     exit(0)
