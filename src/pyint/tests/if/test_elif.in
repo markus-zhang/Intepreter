@@ -1,0 +1,27 @@
+# Initialize variables
+counter = 0
+threshold = 3
+
+# Using a while loop
+while counter < 6:
+    print('Current number:', counter)
+
+    # Using if-elif-else to classify the number as even, odd, or zero
+    if counter == 0:
+        print('The number is zero.')
+    elif counter % 2 == 0:
+        print('The number is even.')
+    else:
+        print('The number is odd.')
+
+    # Using if-else to check if the number is greater than the threshold
+    if counter > threshold:
+        print('The number is greater than', threshold)
+    else:
+        print('The number is not greater than', threshold)
+
+    # Increment counter
+    counter = counter + 1
+
+# End of program
+print('Program completed.')

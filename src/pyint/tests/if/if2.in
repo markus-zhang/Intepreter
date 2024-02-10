@@ -1,0 +1,7 @@
+a = 2
+if a <= 2:            # if, no else
+   if a == 2:         # equal operator
+      if a > 1:       # greater than operator
+         print(3)
+      else:
+         print(4)
