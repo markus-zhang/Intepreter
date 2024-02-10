@@ -313,9 +313,6 @@ class pyparser:
                     exit(0)
                 self.indentloop.pop()
                 self.flagbreak = True
-                # If indentloop has no element, it means this is the only loop and we are good
-                # if len(self.indentloop) == 0:
-                #    self.flagbreakloop = True
                 break
 
     def globalstmt(self):

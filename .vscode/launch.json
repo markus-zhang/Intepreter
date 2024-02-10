@@ -12,7 +12,7 @@
             "console": "integratedTerminal",
             "stopOnEntry": true,
             "justMyCode": false,
-            "args": ["C:/Dev/Projects/Intepreter/src/pyint/tests/misc/test4.in"]
+            "args": ["C:/Dev/Projects/Intepreter/src/pyint/tests/loop/test_while.in"]
         }
     ]
 }
