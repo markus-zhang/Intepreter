@@ -308,7 +308,7 @@ class pyparser:
                     a = a + 1
             """
             if self.token.column <= self.indentloop[-1] and self.token.category not in [INDENT, DEDENT]:
-                if self.token.category == EOF:
+                if self.token.category == EOF and len(self.indentloop) == 1:
                     # Edge case when there is no need to return to caller stmt()
                     exit(0)
                 self.indentloop.pop()
@@ -698,6 +698,10 @@ class pyparser:
                 if self.flagbreakloop is True:
                     self.flagbreak = False
                     self.flagbreakloop = False
+                    # Only return (presumeably to the parent while statement) if the current token is EOF, otherwise continue to execute other statements
+                    # Now what if the parent statement is not a while, but a if -- this also works, because this if statement will be skipped (remember break will skip everything in a while statement, so if the parent statement of this codeblock is NOT a while, it will also be skipped)
+                    if self.token.category == EOF:
+                        return
                 else:
                     return
         self.consume(DEDENT)
