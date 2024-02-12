@@ -1,0 +1,31 @@
+# Global variable declaration
+counter = 0
+
+# Outer loop
+while True:
+    print('Entering outer loop')
+    
+    # Increment global counter
+    counter += 1
+    if counter > 3:  # Limit the outer loop
+        print('Exiting outer loop')
+        break
+    
+    # Middle loop
+    middle_counter = 0
+    while middle_counter < 3:
+        print('  In middle loop')
+        middle_counter += 1
+        
+        # Inner loop
+        inner_counter = 0
+        while inner_counter < 2:
+            print('    Inner loop iteration')
+            inner_counter += 1
+            if inner_counter == 1:  # Specific condition to break from the inner loop
+                print('    Breaking from inner loop')
+                break
+
+        if middle_counter == 2:  # Condition to skip further middle loop iterations
+            print('  Breaking from middle loop early')
+            break

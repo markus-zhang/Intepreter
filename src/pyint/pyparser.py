@@ -327,7 +327,7 @@ class pyparser:
         """
         while True:
             symbol_name = self.token.lexeme
-            if symbol_name in globalsymboltable:
+            if symbol_name in self.globalsymboltable:
                 self.globalvardeclared.add(symbol_name)
             else:
                 raise RuntimeError(f"The variable {symbol_name} has not been defined.")
@@ -846,7 +846,7 @@ class pyparser:
                 if self.token.lexeme not in self.globalsymboltable:
                     raise RuntimeError(f"Name {self.token.lexeme} is decalred to be global yet not defined in global scope.")
                 else:
-                    operandstack.append(self.globalsymboltable[self.token.lexeme])
+                    self.operandstack.append(self.globalsymboltable[self.token.lexeme])
             else:
                 if self.token.lexeme not in self.localsymboltable:
                     if self.token.lexeme not in self.globalsymboltable:
