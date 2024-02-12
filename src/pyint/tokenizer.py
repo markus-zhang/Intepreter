@@ -18,7 +18,7 @@ class tokenizer:
         self.sourceindex = 0
         self.indentstack = [1]
         self.trace = True
-        self.dump_tokenizer = True
+        self.dump_tokenizer = False
         self.token_dump_file = 'C:/Dev/Projects/Intepreter/src/pyint/token.dump'
 
     def getchar(self):
