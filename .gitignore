@@ -2,3 +2,4 @@
 /src/pyint/__pycache__
 /src/util/__pycache__
 /.vscode/launch.json
+/src/pyint/tests
