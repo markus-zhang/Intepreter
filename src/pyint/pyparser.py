@@ -154,6 +154,10 @@ class pyparser:
                 self.consume(NEWLINE)
         elif self.token.category in [PYIF, PYWHILE, DEF]:
             self.compoundstmt()
+            # Sometimes the whilestmt() is the outmost ring, so the return chain does NOT pass a codeblock() thus we must manually revert the flag
+            if self.flagbreak is True and self.flagbreakloop is True:
+                self.flagbreak = False
+                self.flagbreakloop = False
         else:
             raise RuntimeError(f"Expecting print, a name, pass, if, while, but get {self.token.category}")
         
@@ -313,7 +317,7 @@ class pyparser:
             # New logic, check README.md for details
             if self.token.column == self.indentloop[-1] and self.token.category == DEDENT:
                 self.flagbreak = True
-                self.indentloop.pop()
+                self.consume(DEDENT)
                 break
             """
             if self.token.column <= self.indentloop[-1] and self.token.category not in [INDENT, DEDENT]:
@@ -732,16 +736,7 @@ class pyparser:
                 if self.flagbreakloop is True:
                     self.flagbreak = False
                     self.flagbreakloop = False
-                    # Only return (presumeably to the parent while statement) if the current token is EOF, otherwise continue to execute other statements
-                    # Now what if the parent statement is not a while, but a if -- this also works, because this if statement will be skipped (remember break will skip everything in a while statement, so if the parent statement of this codeblock is NOT a while, it will also be skipped)
-                    
-                    break
-                    '''
-                    if self.token.category == EOF:
-                        return
-                    '''
-                else:
-                    return
+                return
         self.consume(DEDENT)
 
     def relexpr(self):

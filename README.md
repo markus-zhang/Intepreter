@@ -4,6 +4,27 @@
 
 After tampering with the code and inevitably deciding to figure out a lot of stuffs by my own, I have stuck in certain topics and unstuck myself eventually. The following is a list of all such topics that might bring frustration to people (like me) who are uninitiated in the Conjuration magic of Compiler Design:
 
+#### Break
+
+This is the most difficult one:
+
+1. In the tokenizer, the `DEDENT` tokens must have the correct columns
+
+2. In the parser, whenever a `break` occurs, the program should perform the following:
+    - in break(), it must consume all DEDENT, including the one usually reserved for the parent codeblock()
+
+    - in break(), a flag must be set to pass to all its parent caller functions
+
+    - While loops must setup another flag to indicate that the while has been broken, everything in the loop has been skipped (including the said DEDENT reserved for the codeblock within the while loop), see codeblock() for why we need a second flag
+
+    - Now while loops can have two parent chinas, one is compoundstmt()->codeblock(), this is when the while loop is wrapped inside of a codeblock, and the other is compoundstmt()->stmt(), this is when the while loop is at the outmost layer, i.e. NOT wrapped within a codeblock
+
+        - For situation 1, the parent codeblock() should clear the two flags -- but because this codeblock() might not be the one that wraps the while loop (e.g. this codeblock() actually wraps an if, and both are within a while loop) -- we need to make sure that the second flag has been set by the while loop -- which means this codeblock is indeed the grandparent of the while loop
+
+        - For situation 2, it's the same stuff but now it is stmt() the grandparent of the while loop, thus it must clear the two flags -- and always check whether both are set
+
+        - We might be able to use the parent (compoundstmt()) to clear the two flags too, need experiment.
+
 #### Function Call
 
 Pre-requsite modifications:

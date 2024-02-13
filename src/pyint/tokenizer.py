@@ -316,7 +316,6 @@ class tokenizer:
                             self.tokenlist.append(self.token_dedent)
                             if self.trace is True:
                                 print(f"{str(self.token_dedent.line)}   {str(self.token_dedent.column)}    {catnames[self.token_dedent.category]}   {str(self.token_dedent.lexeme)}")
-                            # self.indentstack.pop()
                         else:
                             raise RuntimeError(f"Incorrect dedentation {self.token.column} for {self.indentstack}")
             
