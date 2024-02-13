@@ -292,7 +292,7 @@ class tokenizer:
             if len(self.tokenlist) == 0 or self.tokenlist[-1].category == NEWLINE:
                 if self.indentstack[-1] < self.token.column:
                     # Append and add an INDENT
-                    self.token_indent = Token(self.line, 1, INDENT, '')
+                    self.token_indent = Token(self.line, self.indentstack[-1], INDENT, '')
                     # The beauty is that INDENT is created afterwards but appended before the first "real" self.token of the line
                     self.tokenlist.append(self.token_indent)
                     self.indentstack.append(self.token.column)
@@ -308,12 +308,15 @@ class tokenizer:
                             # Do NOT pollute the original self.token as it is not appended yet
                             # Same line as the following self.token(parsed but yet appended)
                             # I put column as 1 but this is not important
-                            self.token_dedent = Token(self.line, 1, DEDENT, '')
+
+                            # Must pop first, otherwise DEDENT gets the wrong position plus indentstack will never be depleted as it has an initial element 1
+                            self.indentstack.pop()
+                            self.token_dedent = Token(self.line, self.indentstack[-1], DEDENT, '')
                             # The beauty is that DEDENT is created afterwards but appended before the first "real" self.token of the line
                             self.tokenlist.append(self.token_dedent)
                             if self.trace is True:
                                 print(f"{str(self.token_dedent.line)}   {str(self.token_dedent.column)}    {catnames[self.token_dedent.category]}   {str(self.token_dedent.lexeme)}")
-                            self.indentstack.pop()
+                            # self.indentstack.pop()
                         else:
                             raise RuntimeError(f"Incorrect dedentation {self.token.column} for {self.indentstack}")
             
