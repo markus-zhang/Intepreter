@@ -154,7 +154,7 @@ class pyparser:
                 self.consume(NEWLINE)
         elif self.token.category in [PYIF, PYWHILE, DEF]:
             self.compoundstmt()
-            # Sometimes the whilestmt() is the outmost ring, so the return chain does NOT pass a codeblock() thus we must manually revert the flag
+            # Sometimes the whilestmt() is the outmost ring, so the return chain does NOT pass a codeblock() thus we must manually revert the flag. Details in README.md
             if self.flagbreak is True and self.flagbreakloop is True:
                 self.flagbreak = False
                 self.flagbreakloop = False

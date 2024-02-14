@@ -11,11 +11,11 @@ This is the most difficult one:
 1. In the tokenizer, the `DEDENT` tokens must have the correct columns
 
 2. In the parser, whenever a `break` occurs, the program should perform the following:
-    - in break(), it must consume all DEDENT, including the one usually reserved for the parent codeblock()
+    - in break(), it must consume all DEDENT, including the one usually reserved for the parent codeblock() -- the one within while loop
 
     - in break(), a flag must be set to pass to all its parent caller functions
 
-    - While loops must setup another flag to indicate that the while has been broken, everything in the loop has been skipped (including the said DEDENT reserved for the codeblock within the while loop), see codeblock() for why we need a second flag
+    - While loops must set another flag to indicate that the while has been broken, everything in the loop has been skipped (including the said DEDENT reserved for the codeblock within the while loop), see codeblock() for why we need a second flag
 
     - Now while loops can have two parent chinas, one is compoundstmt()->codeblock(), this is when the while loop is wrapped inside of a codeblock, and the other is compoundstmt()->stmt(), this is when the while loop is at the outmost layer, i.e. NOT wrapped within a codeblock
 
