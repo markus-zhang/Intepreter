@@ -8,22 +8,30 @@ After tampering with the code and inevitably deciding to figure out a lot of stu
 
 This is the most difficult one:
 
-1. In the tokenizer, the `DEDENT` tokens must have the correct columns
+1. In the tokenizer, the `DEDENT` tokens must have the correct columns (check bookmark `rm00` in `tokenizer.py`)
 
 2. In the parser, whenever a `break` occurs, the program should perform the following:
-    - in break(), it must consume all DEDENT, including the one usually reserved for the parent codeblock() -- the one within while loop
+    - in break(), it must consume all DEDENT, including the one usually reserved for the parent codeblock() -- the one within while loop (`parser.py`, bookmark `rm01`)
 
-    - in break(), a flag must be set to pass to all its parent caller functions
+    - in break(), a flag must be set to pass to all its parent caller functions (`parser.py`, bookmark `rm01`)
 
-    - While loops must set another flag to indicate that the while has been broken, everything in the loop has been skipped (including the said DEDENT reserved for the codeblock within the while loop), see codeblock() for why we need a second flag
+    - `while` loops must set another flag to indicate that the code breaks out of the `while` loop, everything in the loop has been skipped (including the said `DEDENT` reserved for the `codeblock` within the `while` loop), see `codeblock()` for why we need a second flag (`parser.py`, bookmark `rm02`) (`parser.py`, bookmark `rm03`)
 
-    - Now while loops can have two parent chinas, one is compoundstmt()->codeblock(), this is when the while loop is wrapped inside of a codeblock, and the other is compoundstmt()->stmt(), this is when the while loop is at the outmost layer, i.e. NOT wrapped within a codeblock
+    - Now `while` loops can have two kinds of call stacks, one is `whilestmt()`<-`compoundstmt()`<-`codeblock()`, this is when the `while` loop is wrapped inside of a `codeblock`, and the other is `whilestmt()`<-`compoundstmt()`->`stmt()`, this is when the `while` loop is at the outmost layer, i.e. NOT wrapped within a `codeblock`
 
-        - For situation 1, the parent codeblock() should clear the two flags -- but because this codeblock() might not be the one that wraps the while loop (e.g. this codeblock() actually wraps an if, and both are within a while loop) -- we need to make sure that the second flag has been set by the while loop -- which means this codeblock is indeed the grandparent of the while loop
+        - For situation 1, the parent `codeblock()` should clear the two flags -- but we need to make sure that it IS the right one, e.g. this `codeblock` actually wraps an `if` which has a `break`, and both are within a `while` loop, so you have a call stack that looks like:
+        
+        `break()`<-`simplestmt()`<-`stmt()`<-`codeblock()`<-`ifstmt()`<-`compoundstmt()`<-`stmt()`<-`codeblock()`<-`whilestmt()`<-`compoundstmt()`<-`stmt()`<-`codeblock()`<-..., 
+        
+        and only the last one is the correct one to reset the two flags -- we need to make sure that the second flag has been set by the `while` loop -- which means this `codeblock` is indeed the grandparent of the while loop
 
-        - For situation 2, it's the same stuff but now it is stmt() the grandparent of the while loop, thus it must clear the two flags -- and always check whether both are set
+        - For situation 2, it's the same stuff but now it looks like:
+        
+        `break()`<-`simplestmt()`<-`stmt()`<-`codeblock()`<-`ifstmt()`<-`compoundstmt()`<-`stmt()`<-`codeblock()`<-`whilestmt()`<-`compoundstmt()`<-`stmt()`<-`program()`<-...,
+        
+         Now that `stmt()` must clear the two flags -- and always check whether both are set. (check bookmark `rm04` in `tokenizer.py`)
 
-        - We might be able to use the parent (compoundstmt()) to clear the two flags too, need experiment.
+        - We might be able to use the common parent node -- `stmt()` to reset the two flags but this needs more experiments.
 
 #### Function Call
 
@@ -33,7 +41,8 @@ The two symbol tables are to take the following formats:
 - Entries that have a simple value is a variable
 - Entires that have a complex value is a function imprint
 Maybe later we should just add a *type* field...
-```
+
+```Python
 {
   "a": 3,
   "foo":{
@@ -48,7 +57,7 @@ Maybe later we should just add a *type* field...
 
 Consider the following code:
 
-```
+```Python
 blah = 100
 # Whatever before foo()
 
