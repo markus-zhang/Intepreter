@@ -432,12 +432,13 @@ class pyparser:
         self.codeblock()
 
         # Step 6: Return?
-        if self.returnflag is True:
-            # This function does NOT have a return statement and ends adruptly
-            # So the caller function needs to manually move the token
-            self.functioncalldepth -= 1
-            self.tokenindex = self.returnaddrstack.pop()
-            self.token = self.tokenlist[self.tokenindex]
+        # This function does NOT have a return statement and ends adruptly
+        # So the caller function needs to manually move the token
+        self.functioncalldepth -= 1
+        self.tokenindex = self.returnaddrstack.pop()
+        self.token = self.tokenlist[self.tokenindex]
+        # Restore local symbol table as we already pushed whatever the returned value onto the stack
+        self.localsymboltable = self.localsymboltablebackup
 
     def compoundstmt(self):
         # <compoundstmt>    -> <whilestmt>
