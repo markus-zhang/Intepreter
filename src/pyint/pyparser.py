@@ -288,7 +288,7 @@ class pyparser:
         # <passstmt>        -> 'pass'
         self.advance()
 
-    def stmt(self):
+    def breakstmt(self):
         # <breakstmt>       -> 'break'
         """
         1) if not in a loop, do nothing (check loopindex);
