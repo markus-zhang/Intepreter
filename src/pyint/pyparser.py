@@ -66,6 +66,7 @@ while a < b:
 # <factor>          -> '+' <factor>
 # <factor>          -> '-' <factor>
 # <factor>          -> NAME
+# <factor>          -> <functioncallstmt>
 # <factor>          -> INTEGER
 # <factor>          -> FLOAT
 # <factor>          -> STRING
@@ -97,6 +98,7 @@ class pyparser:
         self.globalvardeclared:set = set()
         # For return addresses, since function calls can be chained, a stack is the natural solution
         self.returnaddrstack = []
+        self.returnflag = False
 
         # For tracking parent loop indentations so that we can break out of it, see breakstat() and codeblock() for why
         self.indentloop = []
@@ -349,8 +351,18 @@ class pyparser:
 
 
     def returnstmt(self):
-        # TODO: Complete implementation of return statement
-        pass
+        # <returnstmt>      -> 'return' [<relexpr>]
+        self.advance()
+
+        # If nothing follows "return"
+        if self.token.category != NEWLINE:
+            # How do we plan to fetch the result?
+            # Recall that it is already pushed to the "stack"
+            self.relexpr()
+            self.returnflag = True
+        # self.functioncalldepth -= 1
+        # self.tokenindex = self.returnaddrstack.pop()
+        # self.token = self.tokenlist[self.tokenindex]
 
     def functioncallstmt(self):
         # <functioncallstmt>-> NAME'(' [<relexpr> (',' <relexpr>)*] ')'
@@ -371,6 +383,7 @@ class pyparser:
             raise RuntimeError(f"Function {function_name} has not been defined yet")
         
         # Step 2: Backup local symbol table and clear the original one
+        # TODO: Only need to backup if we are in a local env
         self.localsymboltablebackup = self.localsymboltable
         self.localsymboltable = {}
 
@@ -419,9 +432,12 @@ class pyparser:
         self.codeblock()
 
         # Step 6: Return?
-        self.functioncalldepth -= 1
-        self.tokenindex = self.returnaddrstack.pop()
-        self.token = self.tokenlist[self.tokenindex]
+        if self.returnflag is True:
+            # This function does NOT have a return statement and ends adruptly
+            # So the caller function needs to manually move the token
+            self.functioncalldepth -= 1
+            self.tokenindex = self.returnaddrstack.pop()
+            self.token = self.tokenlist[self.tokenindex]
 
     def compoundstmt(self):
         # <compoundstmt>    -> <whilestmt>
@@ -681,7 +697,7 @@ class pyparser:
         """
         if self.token.category not in stmttokens:
             raise RuntimeError(f"Expecting a statement but get {catnames[self.token.category]}")
-        while self.token.category in [PRINT, NAME, PYPASS, PYIF, PYWHILE, BREAK]:
+        while self.token.category in stmttokens:
             self.stmt()
             """
             In case codeblock() encounters a "flagbreak" signal, this means we are breaking out. If the other signal "flagbreakloop" is also True, this means we are already out of the while loop we want to break out, so we should reset the two flags.
@@ -816,6 +832,7 @@ class pyparser:
         # <factor>          -> '+' <factor>
         # <factor>          -> '-' <factor>
         # <factor>          -> NAME
+        # <factor>          -> <functioncallstmt>
         # <factor>          -> INTEGER
         # <factor>          -> FLOAT
         # <factor>          -> STRING
@@ -836,25 +853,29 @@ class pyparser:
             right = self.operandstack.pop()
             self.operandstack.append(-1 * right)
         elif self.token.category == NAME:
-            """
-            With functional call implementation, we need to do the following checks:
-            - What is the current scope? (functioncalldepth == 0 or > 0?)
-            - Is variable declared to be global? (check globalvardeclared)
-            - If we are in local scope and cannot find the variable, don't forget to check the global scope as well
-            """
-            if self.token.lexeme in self.globalvardeclared:
-                if self.token.lexeme not in self.globalsymboltable:
-                    raise RuntimeError(f"Name {self.token.lexeme} is decalred to be global yet not defined in global scope.")
-                else:
-                    self.operandstack.append(self.globalsymboltable[self.token.lexeme])
+            # Could also be a function call such as foo()
+            if self.tokenlist[self.tokenindex + 1].category == LEFTPAREN:
+                self.functioncallstmt()
             else:
-                if self.token.lexeme not in self.localsymboltable:
+                """
+                With functional call implementation, we need to do the following checks:
+                - What is the current scope? (functioncalldepth == 0 or > 0?)
+                - Is variable declared to be global? (check globalvardeclared)
+                - If we are in local scope and cannot find the variable, don't forget to check the global scope as well
+                """
+                if self.token.lexeme in self.globalvardeclared:
                     if self.token.lexeme not in self.globalsymboltable:
-                        raise RuntimeError(f"Name {self.token.lexeme} is not defined in local scope, and neither is it defined in the global scope.")
+                        raise RuntimeError(f"Name {self.token.lexeme} is decalred to be global yet not defined in global scope.")
                     else:
                         self.operandstack.append(self.globalsymboltable[self.token.lexeme])
                 else:
-                    self.operandstack.append(self.localsymboltable[self.token.lexeme])
+                    if self.token.lexeme not in self.localsymboltable:
+                        if self.token.lexeme not in self.globalsymboltable:
+                            raise RuntimeError(f"Name {self.token.lexeme} is not defined in local scope, and neither is it defined in the global scope.")
+                        else:
+                            self.operandstack.append(self.globalsymboltable[self.token.lexeme])
+                    else:
+                        self.operandstack.append(self.localsymboltable[self.token.lexeme])
 
             self.advance()
         elif self.token.category == FLOAT:
