@@ -319,15 +319,6 @@ class pyparser:
                 self.flagbreak = True
                 self.consume(DEDENT)
                 break
-            """
-            if self.token.column <= self.indentloop[-1] and self.token.category not in [INDENT, DEDENT]:
-                if self.token.category == EOF and len(self.indentloop) == 1:
-                    # Edge case when there is no need to return to caller stmt()
-                    exit(0)
-                self.indentloop.pop()
-                self.flagbreak = True
-                break
-            """
 
     def globalstmt(self):
         # <globalstmt>      -> 'global' NAME(',' NAME)*
@@ -571,27 +562,11 @@ class pyparser:
                 In case codeblock() encounters a "break", the "break" statement should be able to figure out the next token to execute. We should immediately return from whilestmt (and its children statements)
                 """
                 if self.flagbreak is True:
-                    # Since we only allow break in while loop, this should be the caller function that should reset flagbreak
-                    # TODO: Logic above is wrong, we need to figure out how to set flagbreak to False at the proper level. The fllowing is WRONG.
-                    # flagbreak = False
-                    # To flag that I just break out from the correct while loop, my caller should set both flags to false
-
-                    # New logic
-                    """
                     self.flagbreakloop = True
                     return
                 else:
                     self.tokenindex = relexpr_pos
                     # Manually move the token
-                    # global token
-                    self.token = self.tokenlist[self.tokenindex]
-                    """
-                    self.flagbreakloop = True
-                    return
-                else:
-                    self.tokenindex = relexpr_pos
-                    # Manually move the token
-                    # global token
                     self.token = self.tokenlist[self.tokenindex]
             else:
                 # as in if, we need to skip the indent-dedent block
@@ -720,18 +695,6 @@ class pyparser:
             2) When we are already out of the return "chain", and if we still have more statements in the parent codeblock that contains the loop that we just broke out, we do NOT want to return, because there are other statements to be executed after the loop
             """
             # New "break" logic, see README.md
-            """
-            if self.flagbreak is True:
-                if self.flagbreakloop is True:
-                    self.flagbreak = False
-                    self.flagbreakloop = False
-                    # Only return (presumeably to the parent while statement) if the current token is EOF, otherwise continue to execute other statements
-                    # Now what if the parent statement is not a while, but a if -- this also works, because this if statement will be skipped (remember break will skip everything in a while statement, so if the parent statement of this codeblock is NOT a while, it will also be skipped)
-                    if self.token.category == EOF:
-                        return
-                else:
-                    return
-            """
             if self.flagbreak is True:
                 if self.flagbreakloop is True:
                     self.flagbreak = False
