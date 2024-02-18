@@ -89,7 +89,8 @@ class pyparser:
 
         # We need to split the symbol table into two: local and global
         self.localsymboltable = {}
-        self.localsymboltablebackup = {}     # This is for function call within function call, basically this is for the caller scope while localsymboltable is for callee scope
+        self.localsymboltablestack = []     # For nested function calls
+        self.localsymboltablebackup = {}    # This is for function call within function call, basically this is for the caller scope while localsymboltable is for callee scope
         self.globalsymboltable = {}
         # OK now we have two symbol tables, which one do we store into/load from?
         # We track function call depth, 0 means global, positive means local, and negative means we made some mistakes in tracking
@@ -382,10 +383,11 @@ class pyparser:
         if function_name not in self.globalsymboltable:
             raise RuntimeError(f"Function {function_name} has not been defined yet")
         
-        # Step 2: Backup local symbol table and clear the original one
-        # TODO: Only need to backup if we are in a local env
-        self.localsymboltablebackup = self.localsymboltable
-        self.localsymboltable = {}
+        # Step 2: Backup local symbol table and clear the original one if we are in a local env
+        if self.functioncalldepth >= 1:
+            # self.localsymboltablebackup = self.localsymboltable
+            # self.localsymboltable = {}
+            self.localsymboltablestack.append(self.localsymboltable)
 
         # Step 3: Populate the parameter field
         """
@@ -420,6 +422,8 @@ class pyparser:
         self.consume(RIGHTPAREN)
 
         # Step 4: Save the return address
+        token_return = self.tokenlist[self.tokenindex]
+        # print(f"return: {token_return.category}, {token_return.lexeme}, {catnames[token_return.category]}")
         self.returnaddrstack.append(self.tokenindex)
 
         # Step 4: Jump to the entry token of the function
@@ -437,8 +441,9 @@ class pyparser:
         self.functioncalldepth -= 1
         self.tokenindex = self.returnaddrstack.pop()
         self.token = self.tokenlist[self.tokenindex]
-        # Restore local symbol table as we already pushed whatever the returned value onto the stack
-        self.localsymboltable = self.localsymboltablebackup
+        # If return to the caller function, restore local symbol table as we already pushed whatever the returned value onto the stack
+        if self.functioncalldepth >= 1:
+            self.localsymboltable = self.localsymboltablestack.pop()
 
     def compoundstmt(self):
         # <compoundstmt>    -> <whilestmt>
@@ -857,6 +862,8 @@ class pyparser:
             # Could also be a function call such as foo()
             if self.tokenlist[self.tokenindex + 1].category == LEFTPAREN:
                 self.functioncallstmt()
+                # NOTE: Function call would jump to the saved return address so does not need to advance()
+                # self.advance()
             else:
                 """
                 With functional call implementation, we need to do the following checks:
@@ -877,8 +884,7 @@ class pyparser:
                             self.operandstack.append(self.globalsymboltable[self.token.lexeme])
                     else:
                         self.operandstack.append(self.localsymboltable[self.token.lexeme])
-
-            self.advance()
+                self.advance()
         elif self.token.category == FLOAT:
             self.operandstack.append(float(self.token.lexeme))
             self.advance()
