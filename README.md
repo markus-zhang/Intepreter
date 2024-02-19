@@ -4,6 +4,15 @@
 
 After tampering with the code and inevitably deciding to figure out a lot of stuffs by my own, I have stuck in certain topics and unstuck myself eventually. The following is a list of all such topics that might bring frustration to people (like me) who are uninitiated in the Conjuration magic of Compiler Design:
 
+#### Thoughs about flags
+
+We use flags to indicate that the program is in a break chain, or a return chain, and there are two key issues we need to take care of:
+- These flags must propogate through the chain, and most importantly whoever calls the codeblock() should follow up with checks against the flags. If the checks return True then the caller functions must return as well.
+- These flags must be reset ONLY in the CALLER of functions they serve
+    - TODO: We can probably modify the logic of break flag -- instead of use two flags, maybe we can just use one flag but reset it in stmt(). There is no need to reset it in codeblock()
+    - break flag serves while statement, so we need to reset it in the CALLER of while statement, that is, either codeblock() or stmt(). codeblock() is a bit special as it is the caller of many other functions, thus we need to use a second break flag to tell codeblock() that we already broke out of the while loop we intended to
+    - return flag serves return statement, so we need to reset it in the CALLER of return statement, that is, functioncallstmt()
+
 #### Break
 
 This is the most difficult one:

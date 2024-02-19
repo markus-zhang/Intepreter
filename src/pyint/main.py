@@ -34,10 +34,11 @@ def main():
             exit()
         T.traceall()
         T.removecomment()
-        P = pyparser(tokenlist=tokenlist)
+        P = pyparser(tokenlist=tokenlist, source=source)
         P.parse()
     except RuntimeError as emsg:
         T.dump()
+        P.dump()
         print(emsg)
         sys.exit(1)
 

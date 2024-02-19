@@ -140,4 +140,4 @@ smalltokens = {
     '':     EOF
 }
 
-stmttokens = [PYIF, PYWHILE, PRINT, PYPASS, NAME, BREAK, DEF]
+stmttokens = [PYIF, PYWHILE, PRINT, PYPASS, NAME, BREAK, DEF, RETURN, GLOBAL]
