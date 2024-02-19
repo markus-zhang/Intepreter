@@ -422,15 +422,7 @@ class pyparser:
         self.consume(RIGHTPAREN)
 
         # Step 4: Save the return address
-        # TODO: This is wrong if there is something else after "return" statement:
-        '''
-        def process_value(x, increment_times):
-            if increment_times == 0:
-                return double(x)
-            return process_value(x + 1, increment_times - 1)
-            ^This is the incorrect return address!
-        '''
-        token_return = self.tokenlist[self.tokenindex]
+        # token_return = self.tokenlist[self.tokenindex]
         # print(f"return: {token_return.category}, {token_return.lexeme}, {catnames[token_return.category]}")
         self.returnaddrstack.append(self.tokenindex)
 
@@ -724,6 +716,9 @@ class pyparser:
             1) When we are in the MIDDLE of the return "chain" triggered by a break, we need to return from codeblock(), why? Because we want to find the top loop that pairs with the break statement
             2) When we are already out of the return "chain", and if we still have more statements in the parent codeblock that contains the loop that we just broke out, we do NOT want to return, because there are other statements to be executed after the loop
             """
+            # NOTE: New "return" logic, should skip every statement after return if it is triggers
+            if self.returnflag is True:
+                return
             # New "break" logic, see README.md
             if self.flagbreak is True:
                 if self.flagbreakloop is True:
