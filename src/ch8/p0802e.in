@@ -1,9 +1,0 @@
-
-a = 2     
-b = a + 8
-
-c = a*b + 5/3 - 4
-
-d = +-a
-print(d * 2)
-print()

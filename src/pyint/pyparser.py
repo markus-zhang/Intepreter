@@ -80,8 +80,9 @@ from pyheader import *
 from type import is_operatable
 
 class pyparser:
-    def __init__(self, tokenlist:list):
+    def __init__(self, tokenlist:list, source:str):
         self.tokenlist = tokenlist
+        self.source = source
         self.trace = False
         self.token = None
         self.tokenindex = 0
@@ -95,8 +96,9 @@ class pyparser:
         # OK now we have two symbol tables, which one do we store into/load from?
         # We track function call depth, 0 means global, positive means local, and negative means we made some mistakes in tracking
         self.functioncalldepth = 0
-        # If some variables are declared global using the "global" keyword, put into this set so that we know
-        self.globalvardeclared:set = set()
+        # If some variables are declared global using the "global" keyword, put into this set. For nested function calls, push each "layer" into the stack and pop it out when the function returns
+        self.globalvardeclared = set()
+        self.globalvardeclaredstack = []
         # For return addresses, since function calls can be chained, a stack is the natural solution
         self.returnaddrstack = []
         self.returnflag = False
@@ -369,27 +371,22 @@ class pyparser:
         # <functioncallstmt>-> NAME'(' [<relexpr> (',' <relexpr>)*] ')'
         """
         1. Locate the function in globalsymboltable
-        2. Save the return address into returnaddressstack
-        2. Duplicate the localsymboltable to localsymboltablebackup
-        3. Populate the parameter field if applicable
-            - Also populate the new localsymboltable
-            - Raise error if more/less parameters are given
-        4. Jump to the tokenindex of the function body
-        5. Execute the function body (maybe use another function "functioncallcodeblock()")
+        2. Populate the parameter field
+        3. Backup local symbol table and global var declared
+            - Also swap the local symbol table for the callee function
+            - Also clear the global var declared for the callee function
+        4. Save the return address (current token to be executed)
+        5. Jump to the tokenindex of the function body
         6. Cleanup after return
         """
         function_name = self.token.lexeme
-        # Step 1: Check whether it is in global symbol table
+        self.localsymboltablebackup = {}
+
+        # Step 1: Locate the function in globalsymboltable
         if function_name not in self.globalsymboltable:
             raise RuntimeError(f"Function {function_name} has not been defined yet")
-        
-        # Step 2: Backup local symbol table and clear the original one if we are in a local env
-        if self.functioncalldepth >= 1:
-            # self.localsymboltablebackup = self.localsymboltable
-            # self.localsymboltable = {}
-            self.localsymboltablestack.append(self.localsymboltable)
-
-        # Step 3: Populate the parameter field
+                
+        # Step 2: Populate the parameter field
         """
         In globalsymboltable, each function takes the format of:
         "foo":{
@@ -411,7 +408,7 @@ class pyparser:
                 if counter >= parameter_num:
                     raise RuntimeError(f"Function {function_name} accepts {parameter_num} parameters but gets {counter}")
                 
-                self.localsymboltable[self.globalsymboltable[function_name]["parameters"][counter]] = self.operandstack.pop()
+                self.localsymboltablebackup[self.globalsymboltable[function_name]["parameters"][counter]] = self.operandstack.pop()
                 counter += 1
                 if self.token.category == COMMA:
                     self.advance()
@@ -421,9 +418,14 @@ class pyparser:
         
         self.consume(RIGHTPAREN)
 
-        # Step 4: Save the return address
-        # token_return = self.tokenlist[self.tokenindex]
-        # print(f"return: {token_return.category}, {token_return.lexeme}, {catnames[token_return.category]}")
+        # Step 3: Backup local symbol table and global var declared.
+        # Swap local symbol table, and clear global var declared for the callee function
+        self.localsymboltablestack.append(self.localsymboltable)
+        self.localsymboltable = self.localsymboltablebackup
+        self.globalvardeclaredstack.append(self.globalvardeclared)
+        self.globalvardeclared = set()
+        
+        # NOTE: Step 4: Save the return address
         self.returnaddrstack.append(self.tokenindex)
 
         # Step 4: Jump to the entry token of the function
@@ -431,19 +433,24 @@ class pyparser:
         self.token = self.tokenlist[self.tokenindex]
 
         # Step 5: Execution
-        # TODO: Debug this piece of code
         self.functioncalldepth += 1
         self.codeblock()
 
-        # Step 6: Return?
-        # This function does NOT have a return statement and ends adruptly
-        # So the caller function needs to manually move the token
+        # Step 6: Return
+        # NOTE: This part of the code MUST be in function call, not in return statement, as function call does not necessarily have to contain a return statement
+        # If returnflag is set, we can ONLY reset it when we are sure that we are back in functioncallstmt(). There might be multiple layers of codeblock() so that we cannot reset inside of codeblock()
+        if self.returnflag == True:
+            self.returnflag = False
         self.functioncalldepth -= 1
         self.tokenindex = self.returnaddrstack.pop()
         self.token = self.tokenlist[self.tokenindex]
         # If return to the caller function, restore local symbol table as we already pushed whatever the returned value onto the stack
         if self.functioncalldepth >= 1:
             self.localsymboltable = self.localsymboltablestack.pop()
+            self.globalvardeclared = self.globalvardeclaredstack.pop()
+        if self.functioncalldepth == 0:
+            # We are back to global env
+            self.localsymboltable = {}
 
     def compoundstmt(self):
         # <compoundstmt>    -> <whilestmt>
@@ -473,6 +480,10 @@ class pyparser:
             """
             In case codeblock() encounters a "break", the "break" statement should be able to figure out the next token to execute. We should immediately return from whilestmt (and its children statements)
             """
+            # If we are in the middle of the return chain, we need to return
+            if self.returnflag is True:
+                return
+            # If we are in the middle of the break chain, we need to return
             if self.flagbreak is True:
                 return
         else:
@@ -509,6 +520,10 @@ class pyparser:
                 if elif_executed is False:
                     elif_executed = True
                 self.codeblock()
+                # If we are in the middle of the return chain, we need to return
+                if self.returnflag is True:
+                    return
+                # If we are in the middle of the break chain, we need to return
                 if self.flagbreak is True:
                     return
             else:
@@ -535,6 +550,12 @@ class pyparser:
             # if either condition is True, we need to skip this part as ELSE won't be executed
             if condition is False and elif_executed is False:
                 self.codeblock()
+                # If we are in the middle of the return chain, we need to return
+                if self.returnflag is True:
+                    return
+                # If we are in the middle of the break chain, we need to return
+                if self.flagbreak is True:
+                    return
             else:
                 # codeblock() runs pass the indent-dedent block, but if we choose not to execute codeblock(), we need to implement this functionality by our own
                 indent_tracker = 0
@@ -580,6 +601,9 @@ class pyparser:
             self.consume(COLON)
             if condition is True:
                 self.codeblock()
+                # If we are in the middle of the return chain, we need to return
+                if self.returnflag is True:
+                    return
                 """
                 In case codeblock() encounters a "break", the "break" statement should be able to figure out the next token to execute. We should immediately return from whilestmt (and its children statements)
                 """
@@ -716,7 +740,7 @@ class pyparser:
             1) When we are in the MIDDLE of the return "chain" triggered by a break, we need to return from codeblock(), why? Because we want to find the top loop that pairs with the break statement
             2) When we are already out of the return "chain", and if we still have more statements in the parent codeblock that contains the loop that we just broke out, we do NOT want to return, because there are other statements to be executed after the loop
             """
-            # NOTE: New "return" logic, should skip every statement after return if it is triggers
+            # NOTE: New "return" logic, should skip every statement after return if it is triggers. Don't forget to reset.
             if self.returnflag is True:
                 return
             # New "break" logic, see README.md
@@ -912,3 +936,13 @@ class pyparser:
             self.consume(RIGHTPAREN)
         else:
             raise RuntimeError("Expecting a valid expression.")
+    
+    def dump(self):
+        # In output, show '\n' for newline
+        lexeme = self.token.lexeme.replace('\n', '\\n')
+        print(f"\nError on '{lexeme}' ' line {str(self.token.line)} ' column {str(self.token.column)}'")
+        # Added the feature to enrigh Runtime Error message:
+        # Show the line with a caret pointing to the token
+        sourcesplit = self.source.split('\n')
+        print(sourcesplit[self.token.line - 1])
+        print(' ' * (self.token.column - 1) + '^')
