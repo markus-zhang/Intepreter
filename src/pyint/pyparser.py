@@ -422,6 +422,14 @@ class pyparser:
         self.consume(RIGHTPAREN)
 
         # Step 4: Save the return address
+        # TODO: This is wrong if there is something else after "return" statement:
+        '''
+        def process_value(x, increment_times):
+            if increment_times == 0:
+                return double(x)
+            return process_value(x + 1, increment_times - 1)
+            ^This is the incorrect return address!
+        '''
         token_return = self.tokenlist[self.tokenindex]
         # print(f"return: {token_return.category}, {token_return.lexeme}, {catnames[token_return.category]}")
         self.returnaddrstack.append(self.tokenindex)
