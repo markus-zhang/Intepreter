@@ -3,6 +3,9 @@ from header import *
 # "Operatable" dictionary
 # [LESSTHAN, LESSEQUAL, EQUAL, NOTEQUAL, GREATEREQUAL, GREATERTHAN]
 operatable = {
+    #--------------------------------- Plus and Minus ---------------------------------
+    PLUS:      [('int', 'int'), ('float', 'float'), ('int', 'float'), ('float', 'int'), ('str', 'str')],
+    MINUS:      [('int', 'int'), ('float', 'float'), ('int', 'float'), ('float', 'int')],
     #------------------------------ Composite Assignments ------------------------------
     ADDASSIGN:      [('int', 'int'), ('float', 'float'), ('int', 'float'), ('float', 'int'), ('str', 'str')],
     SUBASSIGN:      [('int', 'int'), ('float', 'float'), ('int', 'float'), ('float', 'int')],
