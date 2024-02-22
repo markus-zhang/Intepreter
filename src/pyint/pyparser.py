@@ -847,14 +847,6 @@ class pyparser:
                     raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
                 
             self.operandstack.append(result)
-            '''
-            if type(left) != type(right):
-                raise RuntimeError(f"Cannot add/subtract {type(left)} with {type(right)}")
-            if optoken.category == PLUS:
-                self.operandstack.append(left + right)
-            else:
-                self.operandstack.append(left - right)
-            '''
 
     def term(self):
         # <term>            -> <factor> ('*' <factor>)*
