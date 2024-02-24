@@ -4,3 +4,5 @@
 /.vscode/launch.json
 /src/pyint/tests
 /src/pyint/token.dump
+/src/pyint_ast/__pycache__
+/src/pyint_ast/tests
