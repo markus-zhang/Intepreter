@@ -832,7 +832,6 @@ class pyparser:
             self.term()
             # Now the right side was pushed onto the operand stack
             right_operand = self.operandstack.pop()
-            # If not of the same type then we simply cannot add or subtract
             left_type = type(left_operand).__name__
             right_type = type(right_operand).__name__
             if token_op.category == PLUS:
@@ -856,18 +855,31 @@ class pyparser:
         while self.token.category in [TIMES, DIVISION, MODULO]:
             # Now the left side was pushed onto the operand stack
             # Note that the left side must be in the loop for multiple operations
-            optoken = self.token
-            left = self.operandstack.pop()
+            token_op = self.token
+            left_operand = self.operandstack.pop()
             self.advance()
             self.factor()
-            # Now the right side was pushed onto the operand stack
-            right = self.operandstack.pop()
-            if optoken.category == TIMES:
-                self.operandstack.append(left * right)
-            elif optoken.category == DIVISION:
-                self.operandstack.append(left / right)
-            elif optoken.category == MODULO:
-                self.operandstack.append(left % right)
+            right_operand = self.operandstack.pop()
+            left_type = type(left_operand).__name__
+            right_type = type(right_operand).__name__
+
+            if token_op.category == TIMES:
+                if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
+                    result = left_operand * right_operand
+                else:
+                    raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
+            elif token_op.category == DIVISION:
+                if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
+                    result = left_operand / right_operand
+                else:
+                    raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
+            elif token_op.category == MODULO:
+                if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
+                    result = left_operand % right_operand
+                else:
+                    raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
+            
+            self.operandstack.append(result)
 
     def factor(self):
         # <factor>          -> '+' <factor>
