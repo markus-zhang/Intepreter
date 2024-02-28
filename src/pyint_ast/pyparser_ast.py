@@ -1146,6 +1146,8 @@ class pyparser:
         elif node_type == PYNONE:
             return None
         elif node_type == NAME:
+            return self.evaluate(node=node)
+            """
             var_name = node.left
             if var_name in self.globalvardeclared:
                 if var_name not in self.globalsymboltable:
@@ -1160,12 +1162,33 @@ class pyparser:
                         return self.globalsymboltable[var_name]
                 else:
                     return self.localsymboltable[var_name]
+            """
         elif node_type == TIMES:
             return self.interpret(node.left) * self.interpret(node.right)
         elif node_type == DIVISION:
             return self.interpret(node.left) / self.interpret(node.right)
         elif node_type == MODULO:
             return self.interpret(node.left) % self.interpret(node.right)
+        
+    def evaluate(self, node:Node):
+        node_type = node.type
+        if node_type in [INTEGER, FLOAT, STRING, PYTRUE, PYFALSE, PYNONE]:
+            return node.left
+        elif node_type == NAME:
+            var_name = node.left
+            if var_name in self.globalvardeclared:
+                if var_name not in self.globalsymboltable:
+                    raise RuntimeError(f"Name {var_name} is decalred to be global yet not defined in global scope.")
+                else:
+                    return self.globalsymboltable[var_name]
+            else:
+                if var_name not in self.localsymboltable:
+                    if var_name not in self.globalsymboltable:
+                        raise RuntimeError(f"Name var_name is not defined in local scope, and neither is it defined in the global scope.")
+                    else:
+                        return self.globalsymboltable[var_name]
+                else:
+                    return self.localsymboltable[var_name]
 
     def dump(self):
         # In output, show '\n' for newline
