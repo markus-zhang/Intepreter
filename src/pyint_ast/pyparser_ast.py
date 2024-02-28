@@ -162,7 +162,7 @@ class pyparser:
         '''
         self.consume(EOF)
         node = Node(PROGRAM, stmtlist, None)
-        self.eval(node=node)
+        self.interpret(node=node)
 
 
     def stmt(self):
@@ -1093,25 +1093,48 @@ class pyparser:
         else:
             raise RuntimeError("Expecting a valid expression.")
         
-    def eval(self, node:Node):
+    def interpret(self, node:Node):
         node_type = node.type
         if node_type == PROGRAM:
             # left node contains a list of statement nodes
             for stmt in node.left:
-                self.eval(stmt)
+                self.interpret(stmt)
         elif node_type == PRINT:
             for item in node.left:
-                print(self.eval(item), end=' ')
+                print(self.interpret(item), end=' ')
         elif node_type == ASSIGNOP:
             var_name = node.left
             if var_name in self.globalvardeclared or self.functioncalldepth == 0:
                 try:
-                    self.globalsymboltable[var_name] = self.eval(node.right)
+                    self.globalsymboltable[var_name] = self.interpret(node.right)
                 except KeyError:
                     raise RuntimeError(f"NAME {var_name} is declared as global but not defined in global scope")
             else:
                 # Then it must be in local scope, even if not found - in that case we will create a new entry
-                self.localsymboltable[var_name] = self.eval(node.right)
+                self.localsymboltable[var_name] = self.interpret(node.right)
+        elif node_type in [ADDASSIGN, SUBASSIGN, MULASSIGN, DIVASSIGN]:
+            var_name = node.left
+            symbol_table_left = None
+            if var_name in self.globalvardeclared or self.functioncalldepth == 0:
+                if var_name in self.globalsymboltable:
+                    symbol_table_left = self.globalsymboltable
+                else:
+                    raise RuntimeError(f"NAME {var_name} is declared in the global scope but is not present")
+            else:
+                if var_name not in self.localsymboltable:
+                    raise RuntimeError(f"NAME {var_name} is not present in the local scope ")
+                symbol_table_left = self.localsymboltable
+            # For compound assign operators, var_name must exist in the symbol table
+            left_type = type(symbol_table_left[var_name]).__name__
+            right_operand = self.interpret(node.right)
+            right_type = type(right_operand).__name__
+            if node_type == ADDASSIGN:
+                if is_operatable(operator=ADDASSIGN, left_type=left_type, right_type=right_type):
+                    symbol_table_left[var_name] = symbol_table_left[var_name] + right_operand
+                    if left_type == 'int' and right_type == 'int':
+                        symbol_table_left[var_name] = int(symbol_table_left[var_name])
+                else:
+                    raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[ADDASSIGN]} {right_type}")
         elif node_type == FLOAT:
             return node.left
         elif node_type == INTEGER:
@@ -1138,11 +1161,11 @@ class pyparser:
                 else:
                     return self.localsymboltable[var_name]
         elif node_type == TIMES:
-            return self.eval(node.left) * self.eval(node.right)
+            return self.interpret(node.left) * self.interpret(node.right)
         elif node_type == DIVISION:
-            return self.eval(node.left) / self.eval(node.right)
+            return self.interpret(node.left) / self.interpret(node.right)
         elif node_type == MODULO:
-            return self.eval(node.left) % self.eval(node.right)
+            return self.interpret(node.left) % self.interpret(node.right)
 
     def dump(self):
         # In output, show '\n' for newline
