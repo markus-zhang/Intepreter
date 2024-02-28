@@ -1,6 +1,6 @@
 import sys
 from tokenizer import tokenizer
-from pyparser import pyparser
+from pyparser_ast import pyparser
 
 # Control switches
 only_tokenizer = False

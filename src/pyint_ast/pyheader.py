@@ -50,6 +50,8 @@ FLOAT               = 40
 DEF                 = 41
 GLOBAL              = 42
 RETURN              = 43
+FUNCTIONCALL        = 44
+PROGRAM             = 45
 ERROR               = 255   # if none of above, then error
 
 # Displayable names for each token category, using dictionary
