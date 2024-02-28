@@ -1126,7 +1126,7 @@ class pyparser:
                 symbol_table_left = self.localsymboltable
             # For compound assign operators, var_name must exist in the symbol table
             left_type = type(symbol_table_left[var_name]).__name__
-            right_operand = self.interpret(node.right)
+            right_operand = self.evaluate(node.right)
             right_type = type(right_operand).__name__
             if node_type == ADDASSIGN:
                 if is_operatable(operator=ADDASSIGN, left_type=left_type, right_type=right_type):
@@ -1135,34 +1135,10 @@ class pyparser:
                         symbol_table_left[var_name] = int(symbol_table_left[var_name])
                 else:
                     raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[ADDASSIGN]} {right_type}")
-        elif node_type == FLOAT:
-            return node.left
-        elif node_type == INTEGER:
-            return node.left
-        elif node_type == PYTRUE:
-            return True
-        elif node_type == PYFALSE:
-            return False
-        elif node_type == PYNONE:
-            return None
+        elif node_type in [INTEGER, FLOAT, STRING, PYTRUE, PYFALSE, PYNONE]:
+            return self.evaluate(node)
         elif node_type == NAME:
             return self.evaluate(node=node)
-            """
-            var_name = node.left
-            if var_name in self.globalvardeclared:
-                if var_name not in self.globalsymboltable:
-                    raise RuntimeError(f"Name {var_name} is decalred to be global yet not defined in global scope.")
-                else:
-                    return self.globalsymboltable[var_name]
-            else:
-                if var_name not in self.localsymboltable:
-                    if var_name not in self.globalsymboltable:
-                        raise RuntimeError(f"Name var_name is not defined in local scope, and neither is it defined in the global scope.")
-                    else:
-                        return self.globalsymboltable[var_name]
-                else:
-                    return self.localsymboltable[var_name]
-            """
         elif node_type == TIMES:
             return self.interpret(node.left) * self.interpret(node.right)
         elif node_type == DIVISION:
