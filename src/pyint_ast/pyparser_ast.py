@@ -1102,6 +1102,7 @@ class pyparser:
         elif node_type == PRINT:
             for item in node.left:
                 print(self.interpret(item), end=' ')
+            print('\n')
         elif node_type == ASSIGNOP:
             var_name = node.left
             if var_name in self.globalvardeclared or self.functioncalldepth == 0:
@@ -1133,6 +1134,25 @@ class pyparser:
                     symbol_table_left[var_name] = symbol_table_left[var_name] + right_operand
                     if left_type == 'int' and right_type == 'int':
                         symbol_table_left[var_name] = int(symbol_table_left[var_name])
+                else:
+                    raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[ADDASSIGN]} {right_type}")
+            elif node_type == SUBASSIGN:
+                if is_operatable(operator=ADDASSIGN, left_type=left_type, right_type=right_type):
+                    symbol_table_left[var_name] = symbol_table_left[var_name] - right_operand
+                    if left_type == 'int' and right_type == 'int':
+                        symbol_table_left[var_name] = int(symbol_table_left[var_name])
+                else:
+                    raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[ADDASSIGN]} {right_type}")
+            if node_type == MULASSIGN:
+                if is_operatable(operator=ADDASSIGN, left_type=left_type, right_type=right_type):
+                    symbol_table_left[var_name] = symbol_table_left[var_name] * right_operand
+                    if left_type == 'int' and right_type == 'int':
+                        symbol_table_left[var_name] = int(symbol_table_left[var_name])
+                else:
+                    raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[ADDASSIGN]} {right_type}")
+            if node_type == DIVASSIGN:
+                if is_operatable(operator=ADDASSIGN, left_type=left_type, right_type=right_type):
+                    symbol_table_left[var_name] = symbol_table_left[var_name] / right_operand
                 else:
                     raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[ADDASSIGN]} {right_type}")
         elif node_type in [INTEGER, FLOAT, STRING, PYTRUE, PYFALSE, PYNONE]:
