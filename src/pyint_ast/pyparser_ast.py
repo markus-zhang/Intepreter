@@ -1102,6 +1102,7 @@ class pyparser:
         elif node_type == PRINT:
             for item in node.left:
                 print(self.interpret(item), end=' ')
+            print('\n')
         elif node_type == ASSIGNOP:
             var_name = node.left
             if var_name in self.globalvardeclared or self.functioncalldepth == 0:
@@ -1126,7 +1127,7 @@ class pyparser:
                 symbol_table_left = self.localsymboltable
             # For compound assign operators, var_name must exist in the symbol table
             left_type = type(symbol_table_left[var_name]).__name__
-            right_operand = self.interpret(node.right)
+            right_operand = self.evaluate(node.right)
             right_type = type(right_operand).__name__
             if node_type == ADDASSIGN:
                 if is_operatable(operator=ADDASSIGN, left_type=left_type, right_type=right_type):
@@ -1135,16 +1136,40 @@ class pyparser:
                         symbol_table_left[var_name] = int(symbol_table_left[var_name])
                 else:
                     raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[ADDASSIGN]} {right_type}")
-        elif node_type == FLOAT:
+            elif node_type == SUBASSIGN:
+                if is_operatable(operator=ADDASSIGN, left_type=left_type, right_type=right_type):
+                    symbol_table_left[var_name] = symbol_table_left[var_name] - right_operand
+                    if left_type == 'int' and right_type == 'int':
+                        symbol_table_left[var_name] = int(symbol_table_left[var_name])
+                else:
+                    raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[ADDASSIGN]} {right_type}")
+            if node_type == MULASSIGN:
+                if is_operatable(operator=ADDASSIGN, left_type=left_type, right_type=right_type):
+                    symbol_table_left[var_name] = symbol_table_left[var_name] * right_operand
+                    if left_type == 'int' and right_type == 'int':
+                        symbol_table_left[var_name] = int(symbol_table_left[var_name])
+                else:
+                    raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[ADDASSIGN]} {right_type}")
+            if node_type == DIVASSIGN:
+                if is_operatable(operator=ADDASSIGN, left_type=left_type, right_type=right_type):
+                    symbol_table_left[var_name] = symbol_table_left[var_name] / right_operand
+                else:
+                    raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[ADDASSIGN]} {right_type}")
+        elif node_type in [INTEGER, FLOAT, STRING, PYTRUE, PYFALSE, PYNONE]:
+            return self.evaluate(node)
+        elif node_type == NAME:
+            return self.evaluate(node=node)
+        elif node_type == TIMES:
+            return self.interpret(node.left) * self.interpret(node.right)
+        elif node_type == DIVISION:
+            return self.interpret(node.left) / self.interpret(node.right)
+        elif node_type == MODULO:
+            return self.interpret(node.left) % self.interpret(node.right)
+        
+    def evaluate(self, node:Node):
+        node_type = node.type
+        if node_type in [INTEGER, FLOAT, STRING, PYTRUE, PYFALSE, PYNONE]:
             return node.left
-        elif node_type == INTEGER:
-            return node.left
-        elif node_type == PYTRUE:
-            return True
-        elif node_type == PYFALSE:
-            return False
-        elif node_type == PYNONE:
-            return None
         elif node_type == NAME:
             var_name = node.left
             if var_name in self.globalvardeclared:
@@ -1160,12 +1185,6 @@ class pyparser:
                         return self.globalsymboltable[var_name]
                 else:
                     return self.localsymboltable[var_name]
-        elif node_type == TIMES:
-            return self.interpret(node.left) * self.interpret(node.right)
-        elif node_type == DIVISION:
-            return self.interpret(node.left) / self.interpret(node.right)
-        elif node_type == MODULO:
-            return self.interpret(node.left) % self.interpret(node.right)
 
     def dump(self):
         # In output, show '\n' for newline
