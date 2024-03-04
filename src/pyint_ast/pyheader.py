@@ -52,6 +52,7 @@ GLOBAL              = 42
 RETURN              = 43
 FUNCTIONCALL        = 44
 PROGRAM             = 45
+NEGATE              = 46
 ERROR               = 255   # if none of above, then error
 
 # Displayable names for each token category, using dictionary
@@ -100,6 +101,9 @@ catnames = {
     41: 'DEF',
     42: 'GLOBAL',
     43: 'RETURN',
+    44: 'FUNCTIONCALL',
+    45: 'PROGRAM',
+    46: 'NEGATE',
     255:'ERROR'
 }
 
