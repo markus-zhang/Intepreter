@@ -869,33 +869,6 @@ class pyparser:
     def expr(self):
         # <expr>            -> <term> ('+' <term>)*
         # <expr>            -> <term> ('-' <term>)*
-        '''
-        # NOTE: Now we introduce strings into the picture, we need to check types
-        self.term()
-        while self.token.category == PLUS or self.token.category == MINUS:
-            # Now the left side was pushed onto the operand stack
-            # Note that the left side must be in the loop for multiple operations
-            token_op = self.token
-            left_operand = self.operandstack.pop()
-            self.advance()
-            self.term()
-            # Now the right side was pushed onto the operand stack
-            right_operand = self.operandstack.pop()
-            left_type = type(left_operand).__name__
-            right_type = type(right_operand).__name__
-            if token_op.category == PLUS:
-                if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
-                    result = left_operand + right_operand
-                else:
-                    raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
-            elif token_op.category == MINUS:
-                if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
-                    result = left_operand - right_operand
-                else:
-                    raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
-                
-            self.operandstack.append(result)
-        '''
         node_left:Node = self.term()
 
         while self.token.category in [PLUS, MINUS]:
@@ -916,37 +889,6 @@ class pyparser:
         # <term>            -> <factor> ('*' <factor>)*
         # <term>            -> <factor> ('/' <factor>)*
         # <term>            -> <factor> ('%' <factor>)*
-        '''
-        self.factor()
-        while self.token.category in [TIMES, DIVISION, MODULO]:
-            # Now the left side was pushed onto the operand stack
-            # Note that the left side must be in the loop for multiple operations
-            token_op = self.token
-            left_operand = self.operandstack.pop()
-            self.advance()
-            self.factor()
-            right_operand = self.operandstack.pop()
-            left_type = type(left_operand).__name__
-            right_type = type(right_operand).__name__
-
-            if token_op.category == TIMES:
-                if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
-                    result = left_operand * right_operand
-                else:
-                    raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
-            elif token_op.category == DIVISION:
-                if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
-                    result = left_operand / right_operand
-                else:
-                    raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
-            elif token_op.category == MODULO:
-                if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
-                    result = left_operand % right_operand
-                else:
-                    raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
-            
-            self.operandstack.append(result)
-        '''
         self.sign = 1   # Reset sign for next factor
         node_left = self.factor()
 
@@ -1044,6 +986,10 @@ class pyparser:
             else:
                 node = Node(NAME, self.token.lexeme, None)
                 self.advance()
+
+            # For negation such as -(a)
+            if self.sign == -1:
+                node = Node(NEGATE, node, None)
             
             return node
         elif self.token.category == FLOAT:
@@ -1087,7 +1033,11 @@ class pyparser:
             # self.relexpr()
             # self.consume(RIGHTPAREN)
             self.advance()
+            # Must save sign as relexpr() reset sign
+            savesign = self.sign
             node = self.relexpr()
+            if savesign == -1:
+                node = Node(NEGATE, node, None)
             self.consume(RIGHTPAREN)
             return node
         else:
@@ -1101,18 +1051,18 @@ class pyparser:
                 self.interpret(stmt)
         elif node_type == PRINT:
             for item in node.left:
-                print(self.interpret(item), end=' ')
-            print('\n')
+                print(self.evaluate(item), end=' ')
+            print('\n')  
         elif node_type == ASSIGNOP:
             var_name = node.left
             if var_name in self.globalvardeclared or self.functioncalldepth == 0:
                 try:
-                    self.globalsymboltable[var_name] = self.interpret(node.right)
+                    self.globalsymboltable[var_name] = self.evaluate(node.right)
                 except KeyError:
                     raise RuntimeError(f"NAME {var_name} is declared as global but not defined in global scope")
             else:
                 # Then it must be in local scope, even if not found - in that case we will create a new entry
-                self.localsymboltable[var_name] = self.interpret(node.right)
+                self.localsymboltable[var_name] = self.evaluate(node.right)
         elif node_type in [ADDASSIGN, SUBASSIGN, MULASSIGN, DIVASSIGN]:
             var_name = node.left
             symbol_table_left = None
@@ -1155,16 +1105,8 @@ class pyparser:
                     symbol_table_left[var_name] = symbol_table_left[var_name] / right_operand
                 else:
                     raise RuntimeError(f"It is illegal to perform {left_type} {smalltokens[ADDASSIGN]} {right_type}")
-        elif node_type in [INTEGER, FLOAT, STRING, PYTRUE, PYFALSE, PYNONE]:
-            return self.evaluate(node)
         elif node_type == NAME:
-            return self.evaluate(node=node)
-        elif node_type == TIMES:
-            return self.interpret(node.left) * self.interpret(node.right)
-        elif node_type == DIVISION:
-            return self.interpret(node.left) / self.interpret(node.right)
-        elif node_type == MODULO:
-            return self.interpret(node.left) % self.interpret(node.right)
+            return self.evaluate(node)
         
     def evaluate(self, node:Node):
         node_type = node.type
@@ -1185,6 +1127,18 @@ class pyparser:
                         return self.globalsymboltable[var_name]
                 else:
                     return self.localsymboltable[var_name]
+        elif node_type == NEGATE:
+            return -self.evaluate(node.left)
+        elif node_type == TIMES:
+            return self.evaluate(node.left) * self.evaluate(node.right)
+        elif node_type == DIVISION:
+            return self.evaluate(node.left) / self.evaluate(node.right)
+        elif node_type == MODULO:
+            return self.evaluate(node.left) % self.evaluate(node.right)
+        elif node_type == PLUS:
+            return self.evaluate(node.left) + self.evaluate(node.right)
+        elif node_type == MINUS:
+            return self.evaluate(node.left) - self.evaluate(node.right)
 
     def dump(self):
         # In output, show '\n' for newline
