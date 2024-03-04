@@ -869,33 +869,6 @@ class pyparser:
     def expr(self):
         # <expr>            -> <term> ('+' <term>)*
         # <expr>            -> <term> ('-' <term>)*
-        '''
-        # NOTE: Now we introduce strings into the picture, we need to check types
-        self.term()
-        while self.token.category == PLUS or self.token.category == MINUS:
-            # Now the left side was pushed onto the operand stack
-            # Note that the left side must be in the loop for multiple operations
-            token_op = self.token
-            left_operand = self.operandstack.pop()
-            self.advance()
-            self.term()
-            # Now the right side was pushed onto the operand stack
-            right_operand = self.operandstack.pop()
-            left_type = type(left_operand).__name__
-            right_type = type(right_operand).__name__
-            if token_op.category == PLUS:
-                if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
-                    result = left_operand + right_operand
-                else:
-                    raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
-            elif token_op.category == MINUS:
-                if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
-                    result = left_operand - right_operand
-                else:
-                    raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
-                
-            self.operandstack.append(result)
-        '''
         node_left:Node = self.term()
 
         while self.token.category in [PLUS, MINUS]:
@@ -916,37 +889,6 @@ class pyparser:
         # <term>            -> <factor> ('*' <factor>)*
         # <term>            -> <factor> ('/' <factor>)*
         # <term>            -> <factor> ('%' <factor>)*
-        '''
-        self.factor()
-        while self.token.category in [TIMES, DIVISION, MODULO]:
-            # Now the left side was pushed onto the operand stack
-            # Note that the left side must be in the loop for multiple operations
-            token_op = self.token
-            left_operand = self.operandstack.pop()
-            self.advance()
-            self.factor()
-            right_operand = self.operandstack.pop()
-            left_type = type(left_operand).__name__
-            right_type = type(right_operand).__name__
-
-            if token_op.category == TIMES:
-                if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
-                    result = left_operand * right_operand
-                else:
-                    raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
-            elif token_op.category == DIVISION:
-                if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
-                    result = left_operand / right_operand
-                else:
-                    raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
-            elif token_op.category == MODULO:
-                if is_operatable(operator=token_op.category, left_type=left_type, right_type=right_type):
-                    result = left_operand % right_operand
-                else:
-                    raise RuntimeError(f"{token_op.lexeme} operator is not suitable for left operand type {left_type} and right operand type {right_type}")
-            
-            self.operandstack.append(result)
-        '''
         self.sign = 1   # Reset sign for next factor
         node_left = self.factor()
 
